@@ -128,15 +128,6 @@ def doGUI():
     toolbar.update()
     toolbar.pack(side=Tk.BOTTOM, fill=Tk.X, expand=1)
     canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-
-    # bigleftframe=Tk.Frame(top, width=300)
-    # bigleftframe.grid(row=0, column=0, sticky='nsew')
-    # tabControl = ttk.Notebook(bigleftframe) 
-    # leftframe  = Tk.Frame(tabControl) 
-    # tab2       = Tk.Frame(tabControl) 
-    # tabControl.add(leftframe, text ='Tab 1') 
-    # tabControl.add(tab2, text ='Tab 2') 
-    # tabControl.pack(expand = 1, fill ="both") 
   
     leftframe=Tk.Frame(top, width=300)
     leftframe.grid(row=0, column=0, sticky='nsew')
@@ -182,31 +173,6 @@ def doGUI():
     Tk.mainloop()
     return
 
-def doGUI2():
-    root = Tk.Tk() 
-    root.title("Tab Widget") 
-    tabControl = ttk.Notebook(root) 
-    
-    tab1 = ttk.Frame(tabControl) 
-    tab2 = ttk.Frame(tabControl) 
-    
-    tabControl.add(tab1, text ='Tab 1') 
-    tabControl.add(tab2, text ='Tab 2') 
-    tabControl.pack(expand = 1, fill ="both") 
-    ttk.Label(tab1,  
-              text ="Welcome to \
-              GeeksForGeeks").grid(column = 0,  
-                                   row = 0, 
-                                   padx = 30, 
-                                   pady = 30)   
-    ttk.Label(tab2, 
-              text ="Lets dive into the\
-              world of computers").grid(column = 0, 
-                                        row = 0,  
-                                        padx = 30, 
-                                        pady = 30) 
-  
-    root.mainloop()       
 
 if __name__ == "__main__":
     doGUI()
