@@ -30,19 +30,73 @@ else:
     from tkinter import ttk
     from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk as NavigationToolbar2TkAgg
 
+class YScrolledFrame(Tk.Frame, object):
+    def __init__(self, parent, *args, **kwargs):
+        super(YScrolledFrame, self).__init__(parent, *args, **kwargs)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        self.canvas = canvas = Tk.Canvas(self, relief='raised')
+        canvas.grid(row=0, column=0, sticky='nsew')
+
+        scroll = Tk.Scrollbar(self, command=canvas.yview, orient=Tk.VERTICAL)
+        canvas.config(yscrollcommand=scroll.set)
+        scroll.grid(row=0, column=1, sticky='nsew')
+
+        self.content = Tk.Frame(canvas)
+        self.canvas.create_window(0, 0, window=self.content, anchor="nw")
+
+        self.bind('<Configure>', self.on_configure)
+
+    def on_configure(self, event):
+        bbox = self.content.bbox('ALL')
+        self.canvas.config(scrollregion=bbox)
+
+class Notebook(ttk.Notebook, object):
+    def __init__(self, parent, tab_labels):
+        super(Notebook, self).__init__(parent)
+
+        self._tab = {}
+        for text in tab_labels:
+            self._tab[text] = YScrolledFrame(self)
+            # layout by .add defaults to fill=Tk.BOTH, expand=True
+            self.add(self._tab[text], text=text, compound=Tk.TOP)
+
+    def tab(self, key):
+        return self._tab[key].content
+
+class App(Tk.Tk, object):
+    def __init__(self):
+        super(App, self).__init__()
+
+        notebook = Notebook(self, ['Page 1', 'Page 2', 'Page 3'])
+        notebook.grid(row=0, column=0, sticky='nsew')
+
+        # Fill content, to see scroll action
+        tab = notebook.tab('Page 1')
+        for n in range(10):
+            label = Tk.Label(tab, text='Page 1 - Label {}'.format(n))
+            label.grid()
+
 class inputwidget:
     def __init__(self, frame, row, inputtype, name, label, 
-                 startval=None, optionlist=[]):
+                 startval=None, optionlist=[], ctrlframe=None):
         self.name      = name
         self.inputtype = inputtype
         self.label     = label
         self.var       = None
+        self.ctrlframe = ctrlframe
         self.tklabel   = Tk.Label(frame, text=label)
         self.tklabel.grid(row=row, column=0, sticky='w')
         if inputtype is bool:
             # create a checkvar
             self.var       = Tk.IntVar()
-            self.tkentry   = Tk.Checkbutton(frame, variable=self.var)
+            if self.ctrlframe is None:
+                self.tkentry   = Tk.Checkbutton(frame, variable=self.var)
+            else:
+                self.tkentry   = Tk.Checkbutton(frame, variable=self.var, 
+                                                command=self.onoffframe)
+                self.onoffframe()
         elif (inputtype is str) and (len(optionlist)>0):
             # create a dropdown menu
             self.var       = Tk.StringVar()
@@ -64,6 +118,17 @@ class inputwidget:
         else:
             val = self.tkentry.get()
         return val
+
+    def onoffframe(self):
+        if self.var.get() == 1:
+            for child in self.ctrlframe.winfo_children():
+                child.configure(state='normal')
+            #self.ctrlframe.config(state=ACTIVE)
+        else:
+            for child in self.ctrlframe.winfo_children():
+                child.configure(state='disable')
+            #self.ctrlframe.config(state=DISABLED)
+        return
 
 def donothing(toproot):
     filewin = Tk.Toplevel(toproot)
@@ -129,7 +194,7 @@ def doGUI():
     toolbar.pack(side=Tk.BOTTOM, fill=Tk.X, expand=1)
     canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
   
-    leftframe=Tk.Frame(top, width=300)
+    leftframe=Tk.Frame(top, width=400)
     leftframe.grid(row=0, column=0, sticky='nsew')
     leftframe.grid_propagate(0)
 
@@ -151,6 +216,8 @@ def doGUI():
     #for i in range(2): leftframe.columnconfigure(i, weight=1)
 
     tabframe = alltabsdict['Tab 1']
+    #v = Tk.Scrollbar(tabframe)
+    #v.pack(side=Tk.RIGHT, fill=Tk.Y)
     Tk.Label(tabframe, text='Inputs').grid(row=0, column=0, sticky='w')
     allinputs = []
     allinputs.append(inputwidget(tabframe, 1, float, "input0", "Test input 0"))
@@ -166,8 +233,28 @@ def doGUI():
     exitbutton = Tk.Button(master=tabframe, text="Quit", command=top.quit)
     exitbutton.grid(row=6,column=0)
 
-    ttk.Label(alltabsdict['Tab 2'], 
-              text ="STUFF HERE").grid(column=0, row=0, padx=30, pady=30) 
+    #ttk.Label(alltabsdict['Tab 2'], 
+    #          text ="STUFF HERE").grid(column=0, row=0, padx=30, pady=30) 
+    tabframe = alltabsdict['Tab 2']
+    testframe = Tk.LabelFrame(tabframe)
+    canvas = Tk.Canvas(testframe, width=200, height=400)
+    scroll = Tk.Scrollbar(testframe, command=canvas.yview)
+    canvas.config(yscrollcommand=scroll.set, scrollregion=(0,0,100,1000))
+    canvas.pack(side=Tk.LEFT, fill=Tk.BOTH, expand=True)
+    scroll.pack(side=Tk.RIGHT, fill=Tk.Y)
+    frame = Tk.Frame(canvas, bg='white', width=200, height=1000)
+    canvas.create_window(100, 500, window=frame)
+
+    tabframe = alltabsdict['Tab 3']
+    testframe = Tk.LabelFrame(tabframe)
+    testframe.grid(column=0,row=1,padx=10,pady=10)
+    Tk.Label(testframe, text='Frame stuff').grid(row=0, column=0, sticky='w')
+    allinputs.append(inputwidget(testframe, 1, float, "inputB", "Test input B"))
+    Tk.Label(testframe, text='Explanation').grid(row=2, column=0, sticky='w')
+
+    allinputs.append(inputwidget(tabframe, 0, bool,  
+                                 "inputA", "activate tab3", 
+                                 ctrlframe=testframe))
 
     # Start the main loop
     Tk.mainloop()
@@ -175,5 +262,6 @@ def doGUI():
 
 
 if __name__ == "__main__":
+    #App().mainloop()
     doGUI()
     #doGUI2()
