@@ -365,16 +365,17 @@ def doGUI():
 
 class App(Tk.Tk, object):
     def __init__(self, menufunc=None, configyaml='default.yaml', 
+                 title='TK Yaml GUI',
                  *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
 
-        cwd = os.getcwd()
-        self.wm_title("Test TK Input: "+cwd)
+        self.wm_title(title)
 
-        # Set up the menu
+        # Set up the menu bar
         if menufunc is not None:   menufunc(self)
         else:                      dummyMenu(self)
 
+        # Set up the status bar
         self.statusbar = Tk.Label(self, text="%200s"%" ", 
                              bd=1, relief=Tk.SUNKEN, anchor=Tk.W)
         self.statusbar.grid(row=1, columnspan=2, sticky='w')
@@ -385,7 +386,7 @@ class App(Tk.Tk, object):
         #self.fig = Figure(figsize=(5, 4), dpi=100, facecolor='white')    
         self.fig = Figure(dpi=100, facecolor='white')    
         t   = np.arange(0, 3, .01)
-        self.fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
+        self.fig.add_subplot(111) # .plot(t, 2 * np.sin(2 * np.pi * t))
         figcanvas = FigureCanvasTkAgg(self.fig, master=self.center)  # A tk.DrawingArea.
         figcanvas.draw()
         # Add toolbar to figcanvas
@@ -459,13 +460,12 @@ class App(Tk.Tk, object):
         # self.allinputs.append(
         #     inputwidget(tab, None, str, "input5", "Test str"))
 
-
-        button = Tk.Button(master=self.notebook.tab('Tab 5'), text="Pullvals", 
+        button = Tk.Button(master=self.notebook.tab('Tab 1'), text="Pullvals", 
                            command=partial(pullvals, self.inputvars, 
                                            statuslabel=self.statusbar))
         button.grid(column=0, padx=5, sticky='w')
 
-        exitbutton = Tk.Button(master=self.notebook.tab('Tab 5'), 
+        exitbutton = Tk.Button(master=self.notebook.tab('Tab 1'), 
                                text="Quit", command=self.quit)
         exitbutton.grid(row=8, column=0, padx=5, sticky='w')
 

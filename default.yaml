@@ -1,5 +1,5 @@
 tabs:
-  - Tab 5
+#  - Tab 5
   - Tab 1
   - Tab 2
   - Tab 3
@@ -18,14 +18,14 @@ frames:
     tab:  Tab 4
     title: Where's frame 3
   - name: frameA
-    tab:  Tab 5
+    tab:  Tab 1
     row:  1
     title: this is frameA in Tab 5
 
 inputwidgets:
   - name: input_0
     label: Some bool
-    tab:  Tab 5
+    tab:  Tab 1
     row: 0
     inputtype: bool
     defaultval: 1
@@ -45,23 +45,23 @@ inputwidgets:
 
   - name: input_3
     label: "list of options"
-    tab:  Tab 5
+    tab:  Tab 1
     inputtype: str
     optionlist: ['optionA', 'optionB']
     defaultval: 'optionA'
 
   - name: input_4
     label: "string input"
-    tab:  Tab 5
+    tab:  Tab 1
     inputtype: str
 
   - name: label1
     label: "This is some label"
     labelonly: True
-    tab:  Tab 5
+    tab:  Tab 1
 
   - name: label2
     label: "Some more helpful advice"
     labelonly: True
-    tab:  Tab 5
+    tab:  Tab 1
 
