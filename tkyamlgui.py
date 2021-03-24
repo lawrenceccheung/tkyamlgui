@@ -32,12 +32,20 @@ else:
 
 try:
     import ruamel.yaml as yaml
-    #print("# Loaded ruamel.yaml")
+    print("# Loaded ruamel.yaml")
     useruemel=True
 except:
     import yaml as yaml
-    #print("# Loaded yaml")
+    print("# Loaded yaml")
     useruemel=False
+if useruemel: yaml = yaml.YAML()
+
+# Map some strings to types
+typemap={}
+typemap['str']   = str
+typemap['bool']  = bool
+typemap['int']   = int
+typemap['float'] = float
 
 #
 # See https://stackoverflow.com/questions/58045626/scrollbar-in-tkinter-notebook-frames
@@ -196,7 +204,7 @@ def pullvals(inputs, statuslabel=None):
     print("--- pulled values ---")
     return
 
-def doMenu(root):
+def dummyMenu(root):
     """ 
     Adds a menu bar to root
     See https://www.tutorialspoint.com/python/tk_menu.htm
@@ -318,13 +326,16 @@ def doGUI():
 
 
 class App(Tk.Tk, object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, menufunc=None, configyaml='default.yaml', 
+                 *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
 
         cwd = os.getcwd()
         self.wm_title("Test TK Input: "+cwd)
 
-        doMenu(self)
+        # Set up the menu
+        if menufunc is not None:   menufunc(self)
+        else:                      dummyMenu(self)
 
         self.statusbar = Tk.Label(self, text="%200s"%" ", 
                              bd=1, relief=Tk.SUNKEN, anchor=Tk.W)
@@ -350,10 +361,33 @@ class App(Tk.Tk, object):
         self.leftframe.grid(row=0, column=0, sticky='nsew')
         self.leftframe.grid_propagate(0)
 
-        alltabslist = ['Tab 1','Tab 2', 'Tab 3']
+        # Load the yaml input file
+        with open(configyaml) as fp:
+            yamldict = yaml.load(fp)
+
+        # -- Set up the tabs --
+        #alltabslist = ['Tab 1','Tab 2', 'Tab 3']
+        alltabslist = yamldict['tabs']
         self.notebook = Notebook(self.leftframe, alltabslist)
         self.notebook.grid(row=0, column=0, sticky='nsew')
-    
+
+        # -- Set up the frames --
+        self.subframes = {}
+        if 'frames' in yamldict:
+            for frame in yamldict['frames']:
+                name = frame['name']
+                tab  = self.notebook.tab(frame['tab'])
+                self.subframes[name] = Tk.LabelFrame(tab)
+                if 'row' in frame:
+                    self.subframes[name].grid(column=0, row=frame['row'],
+                                              padx=10,pady=10)
+                else:
+                    self.subframes[name].grid(column=0, padx=10,pady=10) 
+                if 'title' in frame:
+                    Tk.Label(self.subframes[name], 
+                             text=frame['title']).grid(row=0, column=0, sticky='w')
+                #print('Done with frame '+name)
+
         tab = self.notebook.tab('Tab 1')
         Tk.Label(tab, text='Inputs').grid(row=0, column=0, sticky='w')
         self.allinputs = []
@@ -394,13 +428,13 @@ class App(Tk.Tk, object):
         testframe.grid(column=0,row=1,padx=10,pady=10)
         Tk.Label(testframe, text='Frame stuff').grid(row=0, column=0, sticky='w')
         self.allinputs.append(
-            inputwidget(testframe, 1, float, "inputB", "Test input B"))
+            inputwidget(testframe, 1, [float, float], "inputB", "Test input B"))
         Tk.Label(testframe, text='Explanation').grid(row=2, column=0, sticky='w')
 
         self.allinputs.append(inputwidget(tabframe, 0, bool,  
                                           "inputA", "activate tab3", 
                                           ctrlframe=testframe))
-
+        return
 
 if __name__ == "__main__":
     App().mainloop()
