@@ -30,13 +30,25 @@ else:
     from tkinter import ttk
     from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk as NavigationToolbar2TkAgg
 
+try:
+    import ruamel.yaml as yaml
+    print("# Loaded ruamel.yaml")
+    useruemel=True
+except:
+    import yaml as yaml
+    print("# Loaded yaml")
+    useruemel=False
+
+#
+# See https://stackoverflow.com/questions/58045626/scrollbar-in-tkinter-notebook-frames
 class YScrolledFrame(Tk.Frame, object):
     def __init__(self, parent, *args, **kwargs):
         super(YScrolledFrame, self).__init__(parent, *args, **kwargs)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        self.canvas = canvas = Tk.Canvas(self, relief='raised')
+        self.canvas = canvas = Tk.Canvas(self, relief='raised', 
+                                         width=350, height=400)
         canvas.grid(row=0, column=0, sticky='nsew')
 
         scroll = Tk.Scrollbar(self, command=canvas.yview, orient=Tk.VERTICAL)
@@ -80,14 +92,16 @@ class App(Tk.Tk, object):
 
 class inputwidget:
     def __init__(self, frame, row, inputtype, name, label, 
-                 startval=None, optionlist=[], ctrlframe=None):
+                 defaultval=None, optionlist=[], ctrlframe=None):
         self.name      = name
         self.inputtype = inputtype
         self.label     = label
         self.var       = None
         self.ctrlframe = ctrlframe
         self.tklabel   = Tk.Label(frame, text=label)
-        self.tklabel.grid(row=row, column=0, sticky='w')
+        #self.tklabel.grid(row=row, column=0, sticky='w')
+        if row is None:  self.tklabel.grid(column=0, sticky='w')
+        else:            self.tklabel.grid(row=row, column=0, sticky='w')
         if inputtype is bool:
             # create a checkvar
             self.var       = Tk.IntVar()
@@ -101,22 +115,28 @@ class inputwidget:
             # create a dropdown menu
             self.var       = Tk.StringVar()
             self.tkentry   = Tk.OptionMenu(frame, self.var, *optionlist)
+        elif (isinstance(inputtype, list)):
+            self.var       = []
         else:
             self.tkentry   = Tk.Entry(master=frame) 
-            self.tkentry.insert(0, repr(startval))
+            self.tkentry.insert(0, repr(defaultval))
+        if row is None: row=self.tklabel.grid_info()['row']
         self.tkentry.grid(row=row, column=1, sticky='w')
         return
 
     def getval(self):
         """Return the value"""
-        if self.inputtype is bool:
-            val = bool(self.var.get())
-        elif (self.inputtype is str):
-            val = str(self.var.get())
-        elif (self.inputtype is int):
-            val = int(self.tkentry.get())
-        else:
-            val = self.tkentry.get()
+        try:
+            if self.inputtype is bool:
+                val = bool(self.var.get())
+            elif (self.inputtype is str):
+                val = str(self.var.get())
+            elif (self.inputtype is int):
+                val = int(self.tkentry.get())
+            else:
+                val = self.tkentry.get()
+        except:
+            val = None
         return val
 
     def onoffframe(self):
@@ -135,9 +155,10 @@ def donothing(toproot):
     button = Tk.Button(filewin, text="Do nothing button")
     button.pack()
 
-def pullvals(inputs):
+def pullvals(inputs, statuslabel=None):
     for inp in inputs:
         print(inp.name+": "+repr(inp.getval()))
+    if statuslabel is not None: statuslabel.config(text='Pulled values')
     return
 
 def doMenu(root):
@@ -260,8 +281,86 @@ def doGUI():
     Tk.mainloop()
     return
 
+# Run all of the gui elements
+def doGUI2():
+
+    # GUI stuff
+    top  = Tk.Tk()
+    #top.geometry("800x600")
+    cwd = os.getcwd()
+    top.wm_title("Test TK Input: "+cwd)
+
+    doMenu(top)
+    
+    statusbar = Tk.Label(top, text="", 
+                         bd=1, relief=Tk.SUNKEN, anchor=Tk.W)
+    statusbar.grid(row=1, columnspan=2, sticky='w')
+    #statusbar.pack(side=Tk.BOTTOM, fill=Tk.X)
+
+    # Get the drawing window
+    center = Tk.Frame(top, padx=5)
+    center.grid(row=0, column=1)
+    fig = Figure(figsize=(5, 4), dpi=100, facecolor='white')    
+    t   = np.arange(0, 3, .01)
+    fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
+    canvas = FigureCanvasTkAgg(fig, master=center)  # A tk.DrawingArea.
+    canvas.draw()
+
+    # pack_toolbar=False will make it easier to use a layout manager later on.
+    toolbar = NavigationToolbar2TkAgg(canvas, center)
+    toolbar.update()
+    toolbar.pack(side=Tk.BOTTOM, fill=Tk.X, expand=1)
+    canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+  
+    leftframe=Tk.Frame(top, width=400)
+    leftframe.grid(row=0, column=0, sticky='nsew')
+    leftframe.grid_propagate(0)
+
+    alltabslist = ['Tab 1','Tab 2', 'Tab 3']
+
+    notebook = Notebook(leftframe, alltabslist)
+    notebook.grid(row=0, column=0, sticky='nsew')
+
+    # tabframe = alltabsdict['Tab 1']
+    tab = notebook.tab('Tab 1')
+    Tk.Label(tab, text='Inputs').grid(row=0, column=0, sticky='w')
+    allinputs = []
+    allinputs.append(inputwidget(tab, None, float, "input0", "Test input 0"))
+    allinputs.append(inputwidget(tab, None, int,   "input1", "Test input 1"))
+    allinputs.append(inputwidget(tab, None, bool,  "input2", "Test input 2"))
+    allinputs.append(inputwidget(tab, None, str,   "input3", "Test input 3",
+                                 optionlist=['option1','option2']))
+    
+    button = Tk.Button(master=tab, text="Pullvals", 
+                       command=partial(pullvals, allinputs, statuslabel=statusbar))
+    button.grid(row=5, column=0)
+
+    exitbutton = Tk.Button(master=tab, text="Quit", command=top.quit)
+    exitbutton.grid(row=8, column=0)
+    col_count, row_count = tab.grid_size()
+    for n in range(row_count): tab.grid_rowconfigure(n, minsize=25)
+
+    tabframe  = notebook.tab('Tab 2') #alltabsdict['Tab 2']
+    for n in range(30):
+        label = Tk.Label(tabframe, text='Page 1 - Label {}'.format(n))
+        label.grid()
+
+    tabframe  = notebook.tab('Tab 3') #alltabsdict['Tab 3']
+    testframe = Tk.LabelFrame(tabframe)
+    testframe.grid(column=0,row=1,padx=10,pady=10)
+    Tk.Label(testframe, text='Frame stuff').grid(row=0, column=0, sticky='w')
+    allinputs.append(inputwidget(testframe, 1, float, "inputB", "Test input B"))
+    Tk.Label(testframe, text='Explanation').grid(row=2, column=0, sticky='w')
+
+    allinputs.append(inputwidget(tabframe, 0, bool,  
+                                 "inputA", "activate tab3", 
+                                 ctrlframe=testframe))
+
+    # Start the main loop
+    Tk.mainloop()
+    return
 
 if __name__ == "__main__":
     #App().mainloop()
-    doGUI()
-    #doGUI2()
+    #doGUI()
+    doGUI2()
