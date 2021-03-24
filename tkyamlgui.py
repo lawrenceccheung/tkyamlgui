@@ -113,11 +113,13 @@ def tkextractval(inputtype, tkvar, tkentry, optionlist=[]):
 
 class inputwidget:
     def __init__(self, frame, row, inputtype, name, label, 
-                 defaultval=None, optionlist=[], ctrlframe=None):
+                 defaultval=None, optionlist=[], ctrlframe=None,
+                 labelonly=False):
         defaultw       = 12
         self.name      = name
-        self.inputtype = inputtype
         self.label     = label
+        self.labelonly = labelonly
+        self.inputtype = inputtype
         self.var       = None
         self.optionlist= optionlist
         self.ctrlframe = ctrlframe
@@ -125,6 +127,8 @@ class inputwidget:
         #self.tklabel.grid(row=row, column=0, sticky='w')
         if row is None:  self.tklabel.grid(column=0, sticky='w', padx=5)
         else:            self.tklabel.grid(row=row, column=0, sticky='w', padx=5)
+        if labelonly: return None
+
         if inputtype is bool:
             # create a checkvar
             self.var       = Tk.IntVar()
@@ -152,7 +156,7 @@ class inputwidget:
             for i in range(N):
                 self.var.append(None)
                 self.tkentry.append(Tk.Entry(master=frame, width=defaultw))
-                self.tkentry[i].insert(0, repr(defaultval))
+                self.tkentry[i].insert(0, repr(defaultval[i]))
         else:
             self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
             self.tkentry.insert(0, repr(defaultval))
@@ -197,27 +201,31 @@ class inputwidget:
     @classmethod
     def fromdict(cls, frame, d, allframes=None):        
         # Parse the dict
-        if 'row' in d:        row = d['row']
-        else:                 row = None
+        name                        = d['name']
+        if 'row' in d:        row   = d['row']
+        else:                 row   = None
         if 'label' in d:      label = d['label']
         else:                 label = ''
-        name                             = d['name']
         if 'defaultval' in d: defaultval = d['defaultval']
         else:                 defaultval = None
         if 'optionlist' in d: optionlist = d['optionlist']
         else:                 optionlist = []
+        if 'labelonly' in d:  labelonly  = d['labelonly']
+        else:                 labelonly = False
+        # Set the control frame (for booleans)
         ctrlframe = None
         if ('ctrlframe' in d) and (allframes is not None):
             ctrlframe = allframes[d['ctrlframe']]
         # Get the input type
-        yamlinputtype    = d['inputtype']
+        if 'inputtype' in d:  yamlinputtype    = d['inputtype']
+        else:                 yamlinputtype    = 'str'
         if isinstance(yamlinputtype, list):
             inputtype = [typemap[x.lower()] for x in yamlinputtype]
         else:
             inputtype = typemap[yamlinputtype.lower()]
         return cls(frame, row, inputtype, name, label,
                    defaultval=defaultval, optionlist=optionlist,
-                   ctrlframe=ctrlframe)
+                   ctrlframe=ctrlframe, labelonly=labelonly)
 # -- Done inputwidget --
 
 def donothing(toproot):
@@ -226,8 +234,10 @@ def donothing(toproot):
     button.pack()
 
 def pullvals(inputs, statuslabel=None):
-    for inp in inputs:
-        print(inp.name+": "+repr(inp.getval()))
+    for key, inp in inputs.items():
+        if inp.labelonly is False:
+            #print(inp)
+            print(inp.name+": "+repr(inp.getval()))
     if statuslabel is not None: statuslabel.config(text='Pulled values')
     print("--- pulled values ---")
     return
@@ -395,8 +405,8 @@ class App(Tk.Tk, object):
 
         # -- Set up the tabs --
         #alltabslist = ['Tab 1','Tab 2', 'Tab 3']
-        alltabslist = yamldict['tabs']
-        self.notebook = Notebook(self.leftframe, alltabslist)
+        self.alltabslist = yamldict['tabs']
+        self.notebook = Notebook(self.leftframe, self.alltabslist)
         self.notebook.grid(row=0, column=0, sticky='nsew')
 
         # -- Set up the frames --
@@ -425,61 +435,70 @@ class App(Tk.Tk, object):
         for widget in yamldict['inputwidgets']:
             name  = widget['name']
             frame = self.tabframeselector(widget)
-            self.inputvars[name] = inputwidget.fromdict(frame, widget,
-                                                        allframes=self.subframes)
+            iwidget = inputwidget.fromdict(frame, widget,
+                                          allframes=self.subframes)
+            self.inputvars[name] = iwidget
         
 
-        tab = self.notebook.tab('Tab 1')
-        Tk.Label(tab, text='Inputs').grid(row=0, column=0, sticky='w')
-        self.allinputs = []
-        self.allinputs.append(
-            inputwidget(tab, None, float, "input0", "Test input 0", 
-                        defaultval=1.0))
-        self.allinputs.append(
-            inputwidget(tab, None, int,   "input1", "Test input 1"))
-        self.allinputs.append(
-            inputwidget(tab, None, bool,  "input2", "Test input 2"))
-        self.allinputs.append(
-            inputwidget(tab, None, str,   "input3", "Test input 3",
-                        optionlist=['option1','option2']))
-        self.allinputs.append(
-            inputwidget(tab, None, [float, int, str], 
-                        "input4", "Test input vec"))
-        self.allinputs.append(
-            inputwidget(tab, None, str, "input5", "Test str"))
+        # tab = self.notebook.tab('Tab 1')
+        # Tk.Label(tab, text='Inputs').grid(row=0, column=0, sticky='w')
+        # self.allinputs = []
+        # self.allinputs.append(
+        #     inputwidget(tab, None, float, "input0", "Test input 0", 
+        #                 defaultval=1.0))
+        # self.allinputs.append(
+        #     inputwidget(tab, None, int,   "input1", "Test input 1"))
+        # self.allinputs.append(
+        #     inputwidget(tab, None, bool,  "input2", "Test input 2"))
+        # self.allinputs.append(
+        #     inputwidget(tab, None, str,   "input3", "Test input 3",
+        #                 optionlist=['option1','option2']))
+        # self.allinputs.append(
+        #     inputwidget(tab, None, [float, int, str], 
+        #                 "input4", "Test input vec"))
+        # self.allinputs.append(
+        #     inputwidget(tab, None, str, "input5", "Test str"))
 
 
-        button = Tk.Button(master=tab, text="Pullvals", 
-                           command=partial(pullvals, self.allinputs, 
+        button = Tk.Button(master=self.notebook.tab('Tab 5'), text="Pullvals", 
+                           command=partial(pullvals, self.inputvars, 
                                            statuslabel=self.statusbar))
-        button.grid(column=0)
+        button.grid(column=0, padx=5, sticky='w')
 
-        exitbutton = Tk.Button(master=tab, text="Quit", command=self.quit)
-        exitbutton.grid(row=8, column=0)
-        col_count, row_count = tab.grid_size()
-        for n in range(row_count): tab.grid_rowconfigure(n, minsize=25)
+        exitbutton = Tk.Button(master=self.notebook.tab('Tab 5'), 
+                               text="Quit", command=self.quit)
+        exitbutton.grid(row=8, column=0, padx=5, sticky='w')
 
-        tabframe  = self.notebook.tab('Tab 2') #alltabsdict['Tab 2']
-        for n in range(30):
-            label = Tk.Label(tabframe, text='Page 1 - Label {}'.format(n))
-            label.grid()
+        # tabframe  = self.notebook.tab('Tab 2') #alltabsdict['Tab 2']
+        # for n in range(30):
+        #     label = Tk.Label(tabframe, text='Page 1 - Label {}'.format(n))
+        #     label.grid()
 
-        tabframe  = self.notebook.tab('Tab 3') #alltabsdict['Tab 3']
-        testframe = Tk.LabelFrame(tabframe)
-        testframe.grid(column=0,row=1,padx=10,pady=10)
-        Tk.Label(testframe, text='Frame stuff').grid(row=0, column=0, sticky='w')
-        self.allinputs.append(
-            inputwidget(testframe, 1, [float, float], "inputB", "Test input B"))
-        Tk.Label(testframe, text='Explanation').grid(row=2, column=0, sticky='w')
+        # tabframe  = self.notebook.tab('Tab 3') #alltabsdict['Tab 3']
+        # testframe = Tk.LabelFrame(tabframe)
+        # testframe.grid(column=0,row=1,padx=10,pady=10)
+        # Tk.Label(testframe, text='Frame stuff').grid(row=0, column=0, sticky='w')
+        # self.allinputs.append(
+        #     inputwidget(testframe, 1, [float, float], "inputB", "Test input B"))
+        # Tk.Label(testframe, text='Explanation').grid(row=2, column=0, sticky='w')
 
-        self.allinputs.append(inputwidget(tabframe, 0, bool,  
-                                          "inputA", "activate tab3", 
-                                          ctrlframe=testframe))
+        # self.allinputs.append(inputwidget(tabframe, 0, bool,  
+        #                                   "inputA", "activate tab3", 
+        #                                   ctrlframe=testframe))
+        self.formatgridrows()
         return
 
     def tabframeselector(self, d):
         if 'frame' in d:  return self.subframes[d['frame']]
         else:             return self.notebook.tab(d['tab'])
+
+    def formatgridrows(self, minsize=25):
+        for tabname in self.alltabslist:
+            tab = self.notebook.tab(tabname)
+            col_count, row_count = tab.grid_size()
+            for n in range(row_count): 
+                tab.grid_rowconfigure(n, minsize=minsize)
+        
 
 if __name__ == "__main__":
     App().mainloop()
