@@ -123,11 +123,12 @@ class inputwidget:
         self.ctrlframe = ctrlframe
         self.tklabel   = Tk.Label(frame, text=label)
         #self.tklabel.grid(row=row, column=0, sticky='w')
-        if row is None:  self.tklabel.grid(column=0, sticky='w')
-        else:            self.tklabel.grid(row=row, column=0, sticky='w')
+        if row is None:  self.tklabel.grid(column=0, sticky='w', padx=5)
+        else:            self.tklabel.grid(row=row, column=0, sticky='w', padx=5)
         if inputtype is bool:
             # create a checkvar
             self.var       = Tk.IntVar()
+            if defaultval is not None: self.var.set(defaultval)
             if self.ctrlframe is None:
                 self.tkentry   = Tk.Checkbutton(frame, variable=self.var)
             else:
@@ -138,6 +139,7 @@ class inputwidget:
             # create a dropdown menu
             self.var       = Tk.StringVar()
             self.tkentry   = Tk.OptionMenu(frame, self.var, *optionlist)
+            if defaultval is not None: self.var.set(defaultval)
         elif (inputtype is str):
             self.var       = Tk.StringVar()
             self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
@@ -191,6 +193,32 @@ class inputwidget:
                 child.configure(state='disable')
             #self.ctrlframe.config(state=DISABLED)
         return
+    
+    @classmethod
+    def fromdict(cls, frame, d, allframes=None):        
+        # Parse the dict
+        if 'row' in d:        row = d['row']
+        else:                 row = None
+        if 'label' in d:      label = d['label']
+        else:                 label = ''
+        name                             = d['name']
+        if 'defaultval' in d: defaultval = d['defaultval']
+        else:                 defaultval = None
+        if 'optionlist' in d: optionlist = d['optionlist']
+        else:                 optionlist = []
+        ctrlframe = None
+        if ('ctrlframe' in d) and (allframes is not None):
+            ctrlframe = allframes[d['ctrlframe']]
+        # Get the input type
+        yamlinputtype    = d['inputtype']
+        if isinstance(yamlinputtype, list):
+            inputtype = [typemap[x.lower()] for x in yamlinputtype]
+        else:
+            inputtype = typemap[yamlinputtype.lower()]
+        return cls(frame, row, inputtype, name, label,
+                   defaultval=defaultval, optionlist=optionlist,
+                   ctrlframe=ctrlframe)
+# -- Done inputwidget --
 
 def donothing(toproot):
     filewin = Tk.Toplevel(toproot)
@@ -372,7 +400,7 @@ class App(Tk.Tk, object):
         self.notebook.grid(row=0, column=0, sticky='nsew')
 
         # -- Set up the frames --
-        self.subframes = {}
+        self.subframes = OrderedDict()
         if 'frames' in yamldict:
             for frame in yamldict['frames']:
                 name = frame['name']
@@ -380,13 +408,26 @@ class App(Tk.Tk, object):
                 self.subframes[name] = Tk.LabelFrame(tab)
                 if 'row' in frame:
                     self.subframes[name].grid(column=0, row=frame['row'],
-                                              padx=10,pady=10)
+                                              padx=10,pady=10, 
+                                              columnspan=4, sticky='w')
                 else:
-                    self.subframes[name].grid(column=0, padx=10,pady=10) 
+                    self.subframes[name].grid(column=0, padx=10,pady=10,
+                                              columnspan=4, sticky='w') 
                 if 'title' in frame:
                     Tk.Label(self.subframes[name], 
-                             text=frame['title']).grid(row=0, column=0, sticky='w')
+                             text=frame['title']).grid(row=0, column=0, 
+                                                       columnspan=4,
+                                                       sticky='w')
                 #print('Done with frame '+name)
+
+        # -- Set up the input widgets --
+        self.inputvars = OrderedDict()
+        for widget in yamldict['inputwidgets']:
+            name  = widget['name']
+            frame = self.tabframeselector(widget)
+            self.inputvars[name] = inputwidget.fromdict(frame, widget,
+                                                        allframes=self.subframes)
+        
 
         tab = self.notebook.tab('Tab 1')
         Tk.Label(tab, text='Inputs').grid(row=0, column=0, sticky='w')
@@ -435,6 +476,10 @@ class App(Tk.Tk, object):
                                           "inputA", "activate tab3", 
                                           ctrlframe=testframe))
         return
+
+    def tabframeselector(self, d):
+        if 'frame' in d:  return self.subframes[d['frame']]
+        else:             return self.notebook.tab(d['tab'])
 
 if __name__ == "__main__":
     App().mainloop()

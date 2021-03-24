@@ -1,4 +1,5 @@
 tabs:
+  - Tab 5
   - Tab 1
   - Tab 2
   - Tab 3
@@ -16,15 +17,41 @@ frames:
   - name: frame3
     tab:  Tab 4
     title: Where's frame 3
+  - name: frameA
+    tab:  Tab 5
+    row:  1
+    title: this is frameA in Tab 5
 
 inputwidgets:
-  - name: input1
-    label: Some  description here
-    tab:  Tab 1
+  - name: input_1
+    label: Some description here
+    frame:  frameA
     inputtype: int 
+    defaultval: 1
 
-  - name: input2
-    label: Some  description here
-    tab:  Tab 1
+  - name: input_2
+    label: "list input  "
+    frame:  frameA
     inputtype: [int, float, str] 
+
+  - name: input_0
+    label: Some bool
+    tab:  Tab 5
+    row: 0
+    inputtype: bool
+    defaultval: 0
+    ctrlframe: frameA
+
+  - name: input_3
+    label: "list of options"
+    tab:  Tab 5
+    inputtype: str
+    optionlist: ['optionA', 'optionB']
+    defaultval: 'optionA'
+
+  - name: input_4
+    label: "string input"
+    tab:  Tab 5
+    inputtype: str
     
+
