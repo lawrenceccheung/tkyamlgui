@@ -1,0 +1,30 @@
+tabs:
+  - Tab 1
+  - Tab 2
+  - Tab 3
+  - Tab 4
+
+frames:
+  - name: frame1
+    tab:  Tab 4
+    row:  1
+    title: This is frame 1
+  - name: frame2
+    tab:  Tab 4
+    row:  0
+    title: This is frame 0
+  - name: frame3
+    tab:  Tab 4
+    title: Where's frame 3
+
+inputwidgets:
+  - name: input1
+    label: Some  description here
+    tab:  Tab 1
+    inputtype: int 
+
+  - name: input2
+    label: Some  description here
+    tab:  Tab 1
+    inputtype: [int, float, str] 
+    
