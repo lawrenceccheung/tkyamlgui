@@ -50,13 +50,13 @@ typemap['float'] = float
 #
 # See https://stackoverflow.com/questions/58045626/scrollbar-in-tkinter-notebook-frames
 class YScrolledFrame(Tk.Frame, object):
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, canvaswidth=500, *args, **kwargs):
         super(YScrolledFrame, self).__init__(parent, *args, **kwargs)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
         self.canvas = canvas = Tk.Canvas(self, relief='raised', 
-                                         width=400, height=450)
+                                         width=canvaswidth, height=450)
         canvas.grid(row=0, column=0, sticky='nsew')
 
         scroll = Tk.Scrollbar(self, command=canvas.yview, orient=Tk.VERTICAL)
@@ -73,12 +73,12 @@ class YScrolledFrame(Tk.Frame, object):
         self.canvas.config(scrollregion=bbox)
 
 class Notebook(ttk.Notebook, object):
-    def __init__(self, parent, tab_labels):
+    def __init__(self, parent, tab_labels, canvaswidth=500):
         super(Notebook, self).__init__(parent)
 
         self._tab = {}
         for text in tab_labels:
-            self._tab[text] = YScrolledFrame(self)
+            self._tab[text] = YScrolledFrame(self, canvaswidth=canvaswidth)
             # layout by .add defaults to fill=Tk.BOTH, expand=True
             self.add(self._tab[text], text=text, compound=Tk.TOP)
 
@@ -366,10 +366,11 @@ class App(Tk.Tk, object):
     Creates a Tk app which loads the configuration from a yaml file
     """
     def __init__(self, menufunc=None, configyaml='default.yaml', 
-                 title='TK Yaml GUI',
+                 title='TK Yaml GUI', leftframew=525,
                  *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
 
+        self.leftframew = leftframew
         self.wm_title(title)
 
         # Set up the menu bar
@@ -378,26 +379,31 @@ class App(Tk.Tk, object):
 
         # Set up the status bar
         self.statusbar = Tk.Label(self, text="%200s"%" ", 
-                             bd=1, relief=Tk.SUNKEN, anchor=Tk.W)
+                                  bd=1, relief=Tk.SUNKEN, anchor=Tk.W)
         self.statusbar.grid(row=1, columnspan=2, sticky='w')
 
         # Get the drawing window
         self.center = Tk.Frame(self, padx=5)
-        self.center.grid(row=0, column=1)
-        #self.fig = Figure(figsize=(5, 4), dpi=100, facecolor='white')    
-        self.fig = Figure(dpi=100, facecolor='white')    
+        self.center.grid(row=0, column=1, sticky='nsew')
+        self.dpi=100
+        #self.bind("<Configure>", self.onsize)
+        #self.fig = Figure(figsize=(5, 4), dpi=100, facecolor='white')
+        self.fig = Figure(figsize=(500/self.dpi, 500/self.dpi),
+                          dpi=self.dpi, facecolor='white')
         t   = np.arange(0, 3, .01)
-        self.fig.add_subplot(111) # .plot(t, 2 * np.sin(2 * np.pi * t))
-        figcanvas = FigureCanvasTkAgg(self.fig, master=self.center)  # A tk.DrawingArea.
-        figcanvas.draw()
+        self.fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
+        self.figcanvas = FigureCanvasTkAgg(self.fig, master=self.center)  # A tk.DrawingArea.
+        self.figcanvas.draw()
         # Add toolbar to figcanvas
-        toolbar = NavigationToolbar2TkAgg(figcanvas, self.center)
+        toolbar = NavigationToolbar2TkAgg(self.figcanvas, self.center)
         toolbar.update()
+        #toolbar.grid(row=1, column=0, sticky='nsew')
         toolbar.pack(side=Tk.BOTTOM, fill=Tk.X, expand=1)
-        figcanvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+        self.figcanvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+        #self.figcanvas.get_tk_widget().grid(row=0, column=0, sticky='nsew')
 
         # The input frame is leftframe
-        self.leftframe=Tk.Frame(self, width=450)
+        self.leftframe=Tk.Frame(self, width=leftframew)
         self.leftframe.grid(row=0, column=0, sticky='nsew')
         self.leftframe.grid_propagate(0)
 
@@ -446,6 +452,11 @@ class App(Tk.Tk, object):
         #                    command=partial(pullvals, self.inputvars, 
         #                                    statuslabel=self.statusbar))
         # button.grid(column=0, padx=5, sticky='w')
+        
+        # -- Button demonstrating update plots --        
+        #button = Tk.Button(master=self.notebook.tab('Tab 1'),text="update plt", 
+        #                  command=self.updateplot).grid(column=0, padx=5, sticky='w')
+
         self.formatgridrows()
         return
 
@@ -459,7 +470,22 @@ class App(Tk.Tk, object):
             col_count, row_count = tab.grid_size()
             for n in range(row_count): 
                 tab.grid_rowconfigure(n, minsize=minsize)
-        
 
+    def updateplot(self):
+        input1=self.inputvars['input_1'].getval()
+        w,h1 = self.winfo_width(), self.winfo_height()
+        canvaswidget=self.figcanvas.get_tk_widget()
+        canvaswidget.configure(width=w-self.leftframew, height=h1-60)
+        self.fig.clf()
+        ax=self.fig.add_subplot(111)
+        ax.clear()
+        t   = np.arange(0, 3, .01)
+        ax.plot(t, t+input1)
+        ax.set_title('replot i='+repr(input1))
+        #self.figcanvas.draw()
+        #self.figcanvas.show()
+        return
+
+        
 if __name__ == "__main__":
     App().mainloop()
