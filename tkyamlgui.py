@@ -394,7 +394,7 @@ class App(Tk.Tk, object):
 
         self.leftframew = leftframew
         self.wm_title(title)
-
+        self.geometry("1050x575")
         # Set up the menu bar
         if menufunc is not None:   menufunc(self)
         else:                      dummyMenu(self)
@@ -405,7 +405,7 @@ class App(Tk.Tk, object):
         self.statusbar.grid(row=1, columnspan=2, sticky='w')
 
         # Get the drawing window
-        self.center = Tk.Frame(self, padx=5)
+        self.center = Tk.Frame(self, width=leftframew, height=500)
         self.center.grid(row=0, column=1, sticky='nsew')
         self.dpi=100
         #self.bind("<Configure>", self.onsize)
@@ -417,12 +417,12 @@ class App(Tk.Tk, object):
         self.figcanvas = FigureCanvasTkAgg(self.fig, master=self.center)  # A tk.DrawingArea.
         self.figcanvas.draw()
         # Add toolbar to figcanvas
-        toolbar = NavigationToolbar2TkAgg(self.figcanvas, self.center)
-        toolbar.update()
-        #toolbar.grid(row=1, column=0, sticky='nsew')
-        toolbar.pack(side=Tk.BOTTOM, fill=Tk.X, expand=1)
-        self.figcanvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-        #self.figcanvas.get_tk_widget().grid(row=0, column=0, sticky='nsew')
+        self.toolbar = NavigationToolbar2TkAgg(self.figcanvas, self.center)
+        self.toolbar.update()
+        self.toolbar.grid(row=1, column=0, sticky='nsew')
+        #toolbar.pack(side=Tk.BOTTOM, fill=Tk.X, expand=1)
+        #self.figcanvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1
+        self.figcanvas.get_tk_widget().grid(row=0, column=0, sticky='nsew')
 
         # The input frame is leftframe
         self.leftframe=Tk.Frame(self, width=leftframew)
@@ -516,7 +516,11 @@ class App(Tk.Tk, object):
         input1=self.inputvars['input_1'].getval()
         w,h1 = self.winfo_width(), self.winfo_height()
         canvaswidget=self.figcanvas.get_tk_widget()
-        canvaswidget.configure(width=w-self.leftframew, height=h1-60)
+        cw, ch = canvaswidget.winfo_width(), canvaswidget.winfo_height()
+        #print(w,h1)
+        #print(cw,ch)
+        #print("")
+        canvaswidget.configure(width=w-self.leftframew-10, height=h1-75)
         self.fig.clf()
         ax=self.fig.add_subplot(111)
         ax.clear()
