@@ -104,7 +104,7 @@ class inputwidget:
     """
     def __init__(self, frame, row, inputtype, name, label, 
                  defaultval=None, optionlist=[], ctrlframe=None,
-                 labelonly=False, outputdef={}):
+                 labelonly=False, outputdef={}, visible=True):
         defaultw       = 12
         self.name      = name
         self.label     = label
@@ -116,8 +116,11 @@ class inputwidget:
         self.tklabel   = Tk.Label(frame, text=label)
         self.outputdef = outputdef
         #self.tklabel.grid(row=row, column=0, sticky='w')
-        if row is None:  self.tklabel.grid(column=0, sticky='w', padx=5)
-        else:            self.tklabel.grid(row=row, column=0, sticky='w', padx=5)
+        if visible:
+            if row is None:  
+                self.tklabel.grid(column=0, sticky='w', padx=5)
+            else:            
+                self.tklabel.grid(row=row, column=0, sticky='w', padx=5)
         if labelonly: return None
 
         if inputtype is bool:
@@ -152,12 +155,13 @@ class inputwidget:
             self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
             self.tkentry.insert(0, repr(defaultval))
         # Add the entry to the frame
-        if row is None: row=self.tklabel.grid_info()['row']
-        if (isinstance(inputtype, list)):
-            for i in range(len(inputtype)):
-                self.tkentry[i].grid(row=row, column=1+i, sticky='w')
-        else:
-            self.tkentry.grid(row=row, column=1, sticky='w')
+        if visible:
+            if row is None: row=self.tklabel.grid_info()['row']
+            if (isinstance(inputtype, list)):
+                for i in range(len(inputtype)):
+                    self.tkentry[i].grid(row=row, column=1+i, sticky='w')
+            else:
+                self.tkentry.grid(row=row, column=1, sticky='w')
         return
 
     def getval(self):
@@ -178,15 +182,31 @@ class inputwidget:
             val = None
         return val
 
+    def setval(self, val):
+        """Update the contents with val"""
+        if (isinstance(self.inputtype, list)):
+            # Input a list
+            for i in range(len(self.inputtype)):
+                self.tkentry[i].insert(0, repr(val[i]))
+        else: 
+            # Handle scalars
+            if self.inputtype is bool:
+                self.tkvar.set(val)
+            elif (self.inputtype is str) and len(self.optionlist)>0:
+                self.tkvar.set(val)
+            else:
+                self.tkentry.delete(0, Tk.END)
+                self.tkentry.insert(0, repr(val))
+        return
+        
+
     def onoffframe(self):
         if self.var.get() == 1:
             for child in self.ctrlframe.winfo_children():
                 child.configure(state='normal')
-            #self.ctrlframe.config(state=ACTIVE)
         else:
             for child in self.ctrlframe.winfo_children():
                 child.configure(state='disable')
-            #self.ctrlframe.config(state=DISABLED)
         return
     
     @classmethod
@@ -203,6 +223,8 @@ class inputwidget:
         else:                 optionlist = []
         if 'labelonly' in d:  labelonly  = d['labelonly']
         else:                 labelonly = False
+        if 'visible' in d:    visible  = d['visible']
+        else:                 visible = True
         # Set the control frame (for booleans)
         ctrlframe = None
         if ('ctrlframe' in d) and (allframes is not None):
@@ -221,7 +243,7 @@ class inputwidget:
         return cls(frame, row, inputtype, name, label,
                    defaultval=defaultval, optionlist=optionlist,
                    ctrlframe=ctrlframe, labelonly=labelonly,
-                   outputdef=outputdef)
+                   outputdef=outputdef, visible=visible)
 # -- Done inputwidget --
 
 def donothing(toproot):
@@ -446,6 +468,20 @@ class App(Tk.Tk, object):
             iwidget = inputwidget.fromdict(frame, widget,
                                           allframes=self.subframes)
             self.inputvars[name] = iwidget
+
+        # -- Set up the buttons --
+        if 'buttons' in yamldict:
+            for button in yamldict['buttons']:
+                frame = self.tabframeselector(button)
+                text  = button['text']
+                cmdstr= button['command']
+                if 'col' in button: col=button['col']
+                else:               col=0
+                b  = Tk.Button(master=frame,text=text,command=eval(cmdstr))
+                if 'row' in button:
+                    b.grid(row=button['row'], column=col, padx=5, sticky='w')
+                else:
+                    b.grid(column=col, padx=5, sticky='w')
         
         # -- Button demonstrating pullvals --
         # button = Tk.Button(master=self.notebook.tab('Tab 1'),text="Pullvals", 
@@ -470,6 +506,11 @@ class App(Tk.Tk, object):
             col_count, row_count = tab.grid_size()
             for n in range(row_count): 
                 tab.grid_rowconfigure(n, minsize=minsize)
+
+    def mirrorinputs(self, source, target):
+        # Get the input 
+        val=self.inputvars[source].getval()
+        self.inputvars[target].setval(val)
 
     def updateplot(self):
         input1=self.inputvars['input_1'].getval()

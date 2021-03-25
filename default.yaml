@@ -35,10 +35,11 @@ inputwidgets:
       
 
   - name: input_1
-    label: Some description here
+    label: input_1 description
     frame:  frameA
     inputtype: int 
     defaultval: 1
+    visible: True
 
   - name: input_2
     label: "list input  "
@@ -63,8 +64,35 @@ inputwidgets:
     labelonly: True
     tab:  Tab 1
 
+  - name: input_5
+    label: Calculated from input_1
+    tab:   Tab 1
+    inputtype: int 
+    defaultval: 1
+    visible: True
+
   - name: label2
-    label: "Some more helpful advice"
+    label: "Some more helpful \"advice\""
     labelonly: True
     tab:  Tab 1
+
+
+buttons:
+  - name:  button1
+    text:  mirror
+    frame: frameA
+    col:   1
+    command: "partial(self.mirrorinputs, \"input_1\", \"input_5\")"
+
+  - name: button
+    text: Update Plot
+    tab:  Tab 1
+    command: self.updateplot
+
+  - name: button
+    text: Exit
+    tab:  Tab 1
+    row:  9
+    command: self.quit
+
 
