@@ -32,11 +32,11 @@ else:
 
 try:
     import ruamel.yaml as yaml
-    print("# Loaded ruamel.yaml")
+    #print("# Loaded ruamel.yaml")
     useruemel=True
 except:
     import yaml as yaml
-    print("# Loaded yaml")
+    #print("# Loaded yaml")
     useruemel=False
 if useruemel: yaml = yaml.YAML()
 
@@ -469,14 +469,14 @@ class App(Tk.Tk, object):
         # self.allinputs.append(
         #     inputwidget(tab, None, str, "input5", "Test str"))
 
-        button = Tk.Button(master=self.notebook.tab('Tab 1'), text="Pullvals", 
-                           command=partial(pullvals, self.inputvars, 
-                                           statuslabel=self.statusbar))
-        button.grid(column=0, padx=5, sticky='w')
+        # button = Tk.Button(master=self.notebook.tab('Tab 1'), text="Pullvals", 
+        #                    command=partial(pullvals, self.inputvars, 
+        #                                    statuslabel=self.statusbar))
+        # button.grid(column=0, padx=5, sticky='w')
 
-        exitbutton = Tk.Button(master=self.notebook.tab('Tab 1'), 
-                               text="Quit", command=self.quit)
-        exitbutton.grid(row=8, column=0, padx=5, sticky='w')
+        # exitbutton = Tk.Button(master=self.notebook.tab('Tab 1'), 
+        #                        text="Quit", command=self.quit)
+        # exitbutton.grid(row=8, column=0, padx=5, sticky='w')
 
         # tabframe  = self.notebook.tab('Tab 2') #alltabsdict['Tab 2']
         # for n in range(30):
