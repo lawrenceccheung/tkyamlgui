@@ -23,13 +23,16 @@ frames:
     title: this is frameA in Tab 5
 
 inputwidgets:
-  - name: input_0
-    label: Some bool
-    tab:  Tab 1
-    row: 0
-    inputtype: bool
+  - name:       input_0
+    label:      Some bool
+    tab:        Tab 1
+    row:        0
+    inputtype:  bool
     defaultval: 1
-    ctrlframe: frameA
+    ctrlframe:  frameA
+    outputdef:
+      AMR-Wind: incflo.input_0
+      
 
   - name: input_1
     label: Some description here

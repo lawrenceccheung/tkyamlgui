@@ -114,7 +114,7 @@ def tkextractval(inputtype, tkvar, tkentry, optionlist=[]):
 class inputwidget:
     def __init__(self, frame, row, inputtype, name, label, 
                  defaultval=None, optionlist=[], ctrlframe=None,
-                 labelonly=False):
+                 labelonly=False, outputdef={}):
         defaultw       = 12
         self.name      = name
         self.label     = label
@@ -124,6 +124,7 @@ class inputwidget:
         self.optionlist= optionlist
         self.ctrlframe = ctrlframe
         self.tklabel   = Tk.Label(frame, text=label)
+        self.outputdef = outputdef
         #self.tklabel.grid(row=row, column=0, sticky='w')
         if row is None:  self.tklabel.grid(column=0, sticky='w', padx=5)
         else:            self.tklabel.grid(row=row, column=0, sticky='w', padx=5)
@@ -223,9 +224,14 @@ class inputwidget:
             inputtype = [typemap[x.lower()] for x in yamlinputtype]
         else:
             inputtype = typemap[yamlinputtype.lower()]
+        # Output definitions
+        if 'outputdef' in d:  outputdef = d['outputdef']
+        else:                 outputdef = {}
+        # Return the widget
         return cls(frame, row, inputtype, name, label,
                    defaultval=defaultval, optionlist=optionlist,
-                   ctrlframe=ctrlframe, labelonly=labelonly)
+                   ctrlframe=ctrlframe, labelonly=labelonly,
+                   outputdef=outputdef)
 # -- Done inputwidget --
 
 def donothing(toproot):
@@ -236,8 +242,11 @@ def donothing(toproot):
 def pullvals(inputs, statuslabel=None):
     for key, inp in inputs.items():
         if inp.labelonly is False:
-            #print(inp)
-            print(inp.name+": "+repr(inp.getval()))
+            # if 'AMR-Wind' in inp.outputdef: 
+            #     outdef=inp.outputdef['AMR-Wind']
+            # else:          
+            #     outdef=''
+            print(inp.name+' '+repr(inp.getval()))
     if statuslabel is not None: statuslabel.config(text='Pulled values')
     print("--- pulled values ---")
     return
