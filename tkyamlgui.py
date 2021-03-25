@@ -85,19 +85,6 @@ class Notebook(ttk.Notebook, object):
     def tab(self, key):
         return self._tab[key].content
 
-class testApp(Tk.Tk, object):
-    def __init__(self):
-        super(App, self).__init__()
-
-        notebook = Notebook(self, ['Page 1', 'Page 2', 'Page 3'])
-        notebook.grid(row=0, column=0, sticky='nsew')
-
-        # Fill content, to see scroll action
-        tab = notebook.tab('Page 1')
-        for n in range(10):
-            label = Tk.Label(tab, text='Page 1 - Label {}'.format(n))
-            label.grid()
-
 def tkextractval(inputtype, tkvar, tkentry, optionlist=[]):
     if inputtype is bool:
         val = bool(tkvar.get())
@@ -112,6 +99,9 @@ def tkextractval(inputtype, tkvar, tkentry, optionlist=[]):
     return val
 
 class inputwidget:
+    """
+    Creates a general-purpose widget for input 
+    """
     def __init__(self, frame, row, inputtype, name, label, 
                  defaultval=None, optionlist=[], ctrlframe=None,
                  labelonly=False, outputdef={}):
@@ -371,8 +361,10 @@ def doGUI():
     Tk.mainloop()
     return
 
-
 class App(Tk.Tk, object):
+    """
+    Creates a Tk app which loads the configuration from a yaml file
+    """
     def __init__(self, menufunc=None, configyaml='default.yaml', 
                  title='TK Yaml GUI',
                  *args, **kwargs):
@@ -449,51 +441,11 @@ class App(Tk.Tk, object):
                                           allframes=self.subframes)
             self.inputvars[name] = iwidget
         
-
-        # tab = self.notebook.tab('Tab 1')
-        # Tk.Label(tab, text='Inputs').grid(row=0, column=0, sticky='w')
-        # self.allinputs = []
-        # self.allinputs.append(
-        #     inputwidget(tab, None, float, "input0", "Test input 0", 
-        #                 defaultval=1.0))
-        # self.allinputs.append(
-        #     inputwidget(tab, None, int,   "input1", "Test input 1"))
-        # self.allinputs.append(
-        #     inputwidget(tab, None, bool,  "input2", "Test input 2"))
-        # self.allinputs.append(
-        #     inputwidget(tab, None, str,   "input3", "Test input 3",
-        #                 optionlist=['option1','option2']))
-        # self.allinputs.append(
-        #     inputwidget(tab, None, [float, int, str], 
-        #                 "input4", "Test input vec"))
-        # self.allinputs.append(
-        #     inputwidget(tab, None, str, "input5", "Test str"))
-
-        # button = Tk.Button(master=self.notebook.tab('Tab 1'), text="Pullvals", 
+        # -- Button demonstrating pullvals --
+        # button = Tk.Button(master=self.notebook.tab('Tab 1'),text="Pullvals", 
         #                    command=partial(pullvals, self.inputvars, 
         #                                    statuslabel=self.statusbar))
         # button.grid(column=0, padx=5, sticky='w')
-
-        # exitbutton = Tk.Button(master=self.notebook.tab('Tab 1'), 
-        #                        text="Quit", command=self.quit)
-        # exitbutton.grid(row=8, column=0, padx=5, sticky='w')
-
-        # tabframe  = self.notebook.tab('Tab 2') #alltabsdict['Tab 2']
-        # for n in range(30):
-        #     label = Tk.Label(tabframe, text='Page 1 - Label {}'.format(n))
-        #     label.grid()
-
-        # tabframe  = self.notebook.tab('Tab 3') #alltabsdict['Tab 3']
-        # testframe = Tk.LabelFrame(tabframe)
-        # testframe.grid(column=0,row=1,padx=10,pady=10)
-        # Tk.Label(testframe, text='Frame stuff').grid(row=0, column=0, sticky='w')
-        # self.allinputs.append(
-        #     inputwidget(testframe, 1, [float, float], "inputB", "Test input B"))
-        # Tk.Label(testframe, text='Explanation').grid(row=2, column=0, sticky='w')
-
-        # self.allinputs.append(inputwidget(tabframe, 0, bool,  
-        #                                   "inputA", "activate tab3", 
-        #                                   ctrlframe=testframe))
         self.formatgridrows()
         return
 
@@ -511,5 +463,3 @@ class App(Tk.Tk, object):
 
 if __name__ == "__main__":
     App().mainloop()
-    #doGUI()
-    #doGUI2()
