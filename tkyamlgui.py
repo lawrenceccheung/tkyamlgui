@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 from functools import partial
 from collections import OrderedDict 
 import sys, os
+from enum import Enum
 
 if sys.version_info[0] < 3:
     import Tkinter as Tk
@@ -40,12 +41,17 @@ except:
     useruemel=False
 if useruemel: yaml = yaml.YAML()
 
+# Add some additional input types
+class moretypes(Enum):
+    mergedboollist = 1    
+
 # Map some strings to types
 typemap={}
 typemap['str']   = str
 typemap['bool']  = bool
 typemap['int']   = int
 typemap['float'] = float
+typemap['mergedboollist'] = moretypes.mergedboollist
 
 #
 # See https://stackoverflow.com/questions/58045626/scrollbar-in-tkinter-notebook-frames
@@ -85,6 +91,16 @@ class Notebook(ttk.Notebook, object):
     def tab(self, key):
         return self._tab[key].content
 
+def getMergedBoollist(inp, allvars):
+    val = []
+    for var in inp.mergedboollist:
+        boolvar = var[0]
+        iftrue  = var[1]
+        iffalse = var[2]
+        if allvars[boolvar].getval():    val.append(iftrue)
+        else:                            val.append(iffalse)
+    return val
+
 def tkextractval(inputtype, tkvar, tkentry, optionlist=[]):
     if inputtype is bool:
         val = bool(tkvar.get())
@@ -104,7 +120,8 @@ class inputwidget:
     """
     def __init__(self, frame, row, inputtype, name, label, 
                  defaultval=None, optionlist=[], ctrlframe=None,
-                 labelonly=False, outputdef={}, visible=True):
+                 labelonly=False, visible=True, 
+                 outputdef={}, mergedboollist=[]):
         defaultw       = 12
         self.name      = name
         self.label     = label
@@ -115,6 +132,11 @@ class inputwidget:
         self.ctrlframe = ctrlframe
         self.tklabel   = Tk.Label(frame, text=label)
         self.outputdef = outputdef
+        self.visible   = visible
+        self.mergedboollist = mergedboollist
+
+        if inputtype == moretypes.mergedboollist: return
+
         #self.tklabel.grid(row=row, column=0, sticky='w')
         if visible:
             if row is None:  
@@ -236,6 +258,8 @@ class inputwidget:
             inputtype = [typemap[x.lower()] for x in yamlinputtype]
         else:
             inputtype = typemap[yamlinputtype.lower()]
+        if 'mergedboollist' in d:  mergedboollist = d['mergedboollist']
+        else:                      mergedboollist = []
         # Output definitions
         if 'outputdef' in d:  outputdef = d['outputdef']
         else:                 outputdef = {}
@@ -243,7 +267,8 @@ class inputwidget:
         return cls(frame, row, inputtype, name, label,
                    defaultval=defaultval, optionlist=optionlist,
                    ctrlframe=ctrlframe, labelonly=labelonly,
-                   outputdef=outputdef, visible=visible)
+                   outputdef=outputdef, mergedboollist=mergedboollist,
+                   visible=visible)
 # -- Done inputwidget --
 
 def donothing(toproot):
@@ -258,7 +283,11 @@ def pullvals(inputs, statuslabel=None):
             #     outdef=inp.outputdef['AMR-Wind']
             # else:          
             #     outdef=''
-            print(inp.name+' '+repr(inp.getval()))
+            if inp.inputtype is moretypes.mergedboollist:
+                val = getMergedBoollist(inp, inputs)
+            else:
+                val = inp.getval()
+            print(inp.name+' '+repr(val))
     if statuslabel is not None: statuslabel.config(text='Pulled values')
     print("--- pulled values ---")
     return
@@ -410,10 +439,10 @@ class App(Tk.Tk, object):
         self.dpi=100
         #self.bind("<Configure>", self.onsize)
         #self.fig = Figure(figsize=(5, 4), dpi=100, facecolor='white')
-        self.fig = Figure(figsize=(500/self.dpi, 500/self.dpi),
+        self.fig = Figure(figsize=(leftframew/self.dpi, 500/self.dpi),
                           dpi=self.dpi, facecolor='white')
-        t   = np.arange(0, 3, .01)
-        self.fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
+        #t   = np.arange(0, 3, .01)
+        #self.fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
         self.figcanvas = FigureCanvasTkAgg(self.fig, master=self.center)  # A tk.DrawingArea.
         self.figcanvas.draw()
         # Add toolbar to figcanvas
@@ -434,7 +463,6 @@ class App(Tk.Tk, object):
             yamldict = yaml.load(fp)
 
         # -- Set up the tabs --
-        #alltabslist = ['Tab 1','Tab 2', 'Tab 3']
         self.alltabslist = yamldict['tabs']
         self.notebook = Notebook(self.leftframe, self.alltabslist)
         self.notebook.grid(row=0, column=0, sticky='nsew')

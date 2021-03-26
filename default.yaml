@@ -71,6 +71,33 @@ inputwidgets:
     defaultval: 1
     visible: True
 
+  - name:       bool1
+    label:      bool 1
+    tab:        Tab 2
+    inputtype:  bool
+    defaultval: 1
+
+  - name:       bool2
+    label:      bool 2
+    tab:        Tab 2
+    inputtype:  bool
+    defaultval: 1
+
+  - name:       bool3
+    label:      bool 3
+    tab:        Tab 2
+    inputtype:  bool
+    defaultval: 1
+
+  - name:       mergedbool1
+    label:    
+    tab:        Tab 2
+    inputtype:  mergedboollist
+    mergedboollist:
+      - ['bool1', 'on1', '']
+      - ['bool2', 'on2', '']
+      - ['bool3', 'on3', '']
+    
   - name: label2
     label: "Some more helpful \"advice\""
     labelonly: True
@@ -96,3 +123,8 @@ buttons:
     command: self.quit
 
 
+  - name: pullvars
+    text: pull vars
+    tab:  Tab 2
+    command: "partial(pullvals, self.inputvars, statuslabel=self.statusbar)"
+    
