@@ -41,9 +41,13 @@ except:
     useruemel=False
 if useruemel: yaml = yaml.YAML()
 
+# Helpful function for pulling things out of dicts
+getdictval = lambda d, key, default: default if key not in d else d[key]
+
 # Add some additional input types
 class moretypes(Enum):
     mergedboollist = 1    
+    listbox        = 2
 
 # Map some strings to types
 typemap={}
@@ -52,6 +56,7 @@ typemap['bool']  = bool
 typemap['int']   = int
 typemap['float'] = float
 typemap['mergedboollist'] = moretypes.mergedboollist
+typemap['listbox']        = moretypes.listbox
 
 #
 # See https://stackoverflow.com/questions/58045626/scrollbar-in-tkinter-notebook-frames
@@ -106,6 +111,8 @@ def tkextractval(inputtype, tkvar, tkentry, optionlist=[]):
         val = bool(tkvar.get())
     elif (inputtype is str) and len(optionlist)>0:
         val = str(tkvar.get())
+    elif (inputtype is moretypes.listbox):
+        val = [tkentry.get(idx) for idx in tkentry.curselection()]
     elif (inputtype is str):
         val = str(tkentry.get())
     elif (inputtype is int):
@@ -119,7 +126,8 @@ class inputwidget:
     Creates a general-purpose widget for input 
     """
     def __init__(self, frame, row, inputtype, name, label, 
-                 defaultval=None, optionlist=[], ctrlframe=None,
+                 defaultval=None, optionlist=[], 
+                 listboxopt={}, ctrlframe=None, ctrlelem=None,
                  labelonly=False, visible=True, 
                  outputdef={}, mergedboollist=[]):
         defaultw       = 12
@@ -129,7 +137,9 @@ class inputwidget:
         self.inputtype = inputtype
         self.var       = None
         self.optionlist= optionlist
+        self.listboxopt= listboxopt
         self.ctrlframe = ctrlframe
+        self.ctrlelem  = ctrlelem
         self.tklabel   = Tk.Label(frame, text=label)
         self.outputdef = outputdef
         self.visible   = visible
@@ -140,9 +150,9 @@ class inputwidget:
         #self.tklabel.grid(row=row, column=0, sticky='w')
         if visible:
             if row is None:  
-                self.tklabel.grid(column=0, sticky='w', padx=5)
+                self.tklabel.grid(column=0, sticky='nw', padx=5)
             else:            
-                self.tklabel.grid(row=row, column=0, sticky='w', padx=5)
+                self.tklabel.grid(row=row, column=0, sticky='nw', padx=5)
         if labelonly: return None
 
         if inputtype is bool:
@@ -155,6 +165,20 @@ class inputwidget:
                 self.tkentry   = Tk.Checkbutton(frame, variable=self.var, 
                                                 command=self.onoffframe)
                 self.onoffframe()
+        elif (inputtype is moretypes.listbox):
+            height=max(3,len(optionlist))
+            self.tkentry   = Tk.Listbox(frame, height=height, **listboxopt) 
+
+            for i, option in enumerate(optionlist):
+                self.tkentry.insert(i+1, option)
+            # Set the default values
+            if defaultval is not None:
+                if not isinstance(defaultval, list): defaultval = [defaultval]
+                for v in defaultval:
+                    # set the value to active
+                    self.tkentry.selection_set(self.optionlist.index(v))
+            if ctrlelem is not None:
+                print("Need to handle ctrlelem in listbox!!!")
         elif (inputtype is str) and (len(optionlist)>0):
             # create a dropdown menu
             self.var       = Tk.StringVar()
@@ -216,6 +240,10 @@ class inputwidget:
                 self.tkvar.set(val)
             elif (self.inputtype is str) and len(self.optionlist)>0:
                 self.tkvar.set(val)
+            elif self.inputtype==moretypes.listbox:
+                for v in defaultval:
+                    # set the value to active
+                    self.tkentry.selection_set(self.optionlist.index(v))
             else:
                 self.tkentry.delete(0, Tk.END)
                 self.tkentry.insert(0, repr(val))
@@ -235,37 +263,48 @@ class inputwidget:
     def fromdict(cls, frame, d, allframes=None):        
         # Parse the dict
         name                        = d['name']
-        if 'row' in d:        row   = d['row']
-        else:                 row   = None
-        if 'label' in d:      label = d['label']
-        else:                 label = ''
-        if 'defaultval' in d: defaultval = d['defaultval']
-        else:                 defaultval = None
-        if 'optionlist' in d: optionlist = d['optionlist']
-        else:                 optionlist = []
-        if 'labelonly' in d:  labelonly  = d['labelonly']
-        else:                 labelonly = False
-        if 'visible' in d:    visible  = d['visible']
-        else:                 visible = True
+        # if 'row' in d:        row   = d['row']
+        # else:                 row   = None
+        # if 'label' in d:      label = d['label']
+        # else:                 label = ''
+        # if 'defaultval' in d: defaultval = d['defaultval']
+        # else:                 defaultval = None
+        # if 'optionlist' in d: optionlist = d['optionlist']
+        # else:                 optionlist = []
+        # if 'labelonly' in d:  labelonly  = d['labelonly']
+        # else:                 labelonly = False
+        # if 'visible' in d:    visible  = d['visible']
+        # else:                 visible = True
+        row        = getdictval(d, 'row',        None)
+        label      = getdictval(d, 'label',      '')
+        defaultval = getdictval(d, 'defaultval', None)
+        optionlist = getdictval(d, 'optionlist', [])
+        labelonly  = getdictval(d, 'labelonly',  False)
+        visible    = getdictval(d, 'visible',    True)
         # Set the control frame (for booleans)
         ctrlframe = None
         if ('ctrlframe' in d) and (allframes is not None):
             ctrlframe = allframes[d['ctrlframe']]
-        # Get the input type
-        if 'inputtype' in d:  yamlinputtype    = d['inputtype']
-        else:                 yamlinputtype    = 'str'
+        # # Get the input type
+        # if 'inputtype' in d:  yamlinputtype    = d['inputtype']
+        # else:                 yamlinputtype    = 'str'
+        yamlinputtype = getdictval(d, 'inputtype', 'str')
         if isinstance(yamlinputtype, list):
             inputtype = [typemap[x.lower()] for x in yamlinputtype]
         else:
             inputtype = typemap[yamlinputtype.lower()]
-        if 'mergedboollist' in d:  mergedboollist = d['mergedboollist']
-        else:                      mergedboollist = []
-        # Output definitions
-        if 'outputdef' in d:  outputdef = d['outputdef']
-        else:                 outputdef = {}
+        # if 'mergedboollist' in d:  mergedboollist = d['mergedboollist']
+        # else:                      mergedboollist = []
+        # # Output definitions
+        # if 'outputdef' in d:  outputdef = d['outputdef']
+        # else:                 outputdef = {}
+        mergedboollist = getdictval(d, 'mergedboollist', [])
+        outputdef  = getdictval(d, 'outputdef', {})
+        listboxopt = getdictval(d, 'listboxopt', {})
         # Return the widget
         return cls(frame, row, inputtype, name, label,
                    defaultval=defaultval, optionlist=optionlist,
+                   listboxopt=listboxopt,
                    ctrlframe=ctrlframe, labelonly=labelonly,
                    outputdef=outputdef, mergedboollist=mergedboollist,
                    visible=visible)

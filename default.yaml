@@ -90,13 +90,22 @@ inputwidgets:
     defaultval: 1
 
   - name:       mergedbool1
-    label:    
+    label:       
     tab:        Tab 2
     inputtype:  mergedboollist
     mergedboollist:
       - ['bool1', 'on1', '']
       - ['bool2', 'on2', '']
       - ['bool3', 'on3', '']
+
+  - name:       listbox1
+    label:      Choose your option
+    tab:        Tab 2
+    inputtype:  listbox
+    optionlist: ['optionA', 'optionB', 'optionC', 'optD', 'optE']    
+    defaultval: optionB
+    listboxopt: 
+      selectmode: multiple
     
   - name: label2
     label: "Some more helpful \"advice\""
