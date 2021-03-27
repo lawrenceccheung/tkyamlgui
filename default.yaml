@@ -13,7 +13,7 @@ frames:
   - name: frame2
     tab:  Tab 4
     row:  0
-    title: This is frame 0
+    title: This is frame 2
   - name: frame3
     tab:  Tab 4
     title: Where's frame 3
@@ -29,11 +29,12 @@ inputwidgets:
     row:        0
     inputtype:  bool
     defaultval: 1
-    ctrlframe:  frameA
+    ctrlelem:
+      - frame:  frameA
+        activewhen: ['', 0]
     outputdef:
       AMR-Wind: incflo.input_0
       
-
   - name: input_1
     label: input_1 description
     frame:  frameA
@@ -76,6 +77,9 @@ inputwidgets:
     tab:        Tab 2
     inputtype:  bool
     defaultval: 1
+    ctrlelem:
+      - input:  listbox1
+      - frame:  frameA
 
   - name:       bool2
     label:      bool 2
@@ -102,11 +106,27 @@ inputwidgets:
     label:      Choose your option
     tab:        Tab 2
     inputtype:  listbox
-    optionlist: ['optionA', 'optionB', 'optionC', 'optD', 'optE']    
-    defaultval: optionB
+    optionlist: ['frame1', 'frame2', 'optionC', 'filename1', 'optE', 'bool1'] 
+    defaultval: optionC
     listboxopt: 
       selectmode: multiple
+    ctrlelem:
+      - frame: frame1
+        activewhen: ['frame1', 1]
+      - frame: frame2
+        activewhen: ['frame2', 0]
+      - input: filename1
+        activewhen: ['filename1', 1]
+      - input: input_2
+        activewhen: ['filename1', 1]
     
+  - name:       filename1
+    label:      Choose a file
+    tab:        Tab 2
+    inputtype:  filename
+    fileopenopt:
+      selecttype: directory
+
   - name: label2
     label: "Some more helpful \"advice\""
     labelonly: True
@@ -130,7 +150,6 @@ buttons:
     tab:  Tab 1
     row:  9
     command: self.quit
-
 
   - name: pullvars
     text: pull vars

@@ -25,10 +25,12 @@ from enum import Enum
 if sys.version_info[0] < 3:
     import Tkinter as Tk
     import ttk
+    import tkFileDialog as filedialog
     from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
 else:
     import tkinter as Tk
     from tkinter import ttk
+    from tkinter import filedialog as filedialog
     from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk as NavigationToolbar2TkAgg
 
 try:
@@ -48,6 +50,7 @@ getdictval = lambda d, key, default: default if key not in d else d[key]
 class moretypes(Enum):
     mergedboollist = 1    
     listbox        = 2
+    filename       = 3
 
 # Map some strings to types
 typemap={}
@@ -57,6 +60,7 @@ typemap['int']   = int
 typemap['float'] = float
 typemap['mergedboollist'] = moretypes.mergedboollist
 typemap['listbox']        = moretypes.listbox
+typemap['filename']       = moretypes.filename
 
 #
 # See https://stackoverflow.com/questions/58045626/scrollbar-in-tkinter-notebook-frames
@@ -115,6 +119,8 @@ def tkextractval(inputtype, tkvar, tkentry, optionlist=[]):
         val = [tkentry.get(idx) for idx in tkentry.curselection()]
     elif (inputtype is str):
         val = str(tkentry.get())
+    elif (inputtype is moretypes.filename):
+        val = str(tkentry.get())
     elif (inputtype is int):
         val = int(float(tkentry.get()))
     else: # float 
@@ -127,7 +133,8 @@ class inputwidget:
     """
     def __init__(self, frame, row, inputtype, name, label, 
                  defaultval=None, optionlist=[], 
-                 listboxopt={}, ctrlframe=None, ctrlelem=None,
+                 listboxopt={},  fileopenopt={},
+                 ctrlframe=None, ctrlelem=None,
                  labelonly=False, visible=True, 
                  outputdef={}, mergedboollist=[]):
         defaultw       = 12
@@ -144,6 +151,7 @@ class inputwidget:
         self.outputdef = outputdef
         self.visible   = visible
         self.mergedboollist = mergedboollist
+        self.button    = None
 
         if inputtype == moretypes.mergedboollist: return
 
@@ -159,15 +167,21 @@ class inputwidget:
             # create a checkvar
             self.var       = Tk.IntVar()
             if defaultval is not None: self.var.set(defaultval)
-            if self.ctrlframe is None:
+            if self.ctrlelem is None:
                 self.tkentry   = Tk.Checkbutton(frame, variable=self.var)
             else:
                 self.tkentry   = Tk.Checkbutton(frame, variable=self.var, 
-                                                command=self.onoffframe)
-                self.onoffframe()
+                                                command=partial(self.onoffctrlelem, None))
+            # if self.ctrlframe is None:
+            #     self.tkentry   = Tk.Checkbutton(frame, variable=self.var)
+            # else:
+            #     self.tkentry   = Tk.Checkbutton(frame, variable=self.var, 
+            #                                     command=self.onoffframe)
+            #     self.onoffframe()
         elif (inputtype is moretypes.listbox):
             height=max(3,len(optionlist))
-            self.tkentry   = Tk.Listbox(frame, height=height, **listboxopt) 
+            self.tkentry   = Tk.Listbox(frame, height=height,
+                                        exportselection=False, **listboxopt) 
 
             for i, option in enumerate(optionlist):
                 self.tkentry.insert(i+1, option)
@@ -177,8 +191,8 @@ class inputwidget:
                 for v in defaultval:
                     # set the value to active
                     self.tkentry.selection_set(self.optionlist.index(v))
-            if ctrlelem is not None:
-                print("Need to handle ctrlelem in listbox!!!")
+            if self.ctrlelem is not None:
+                self.tkentry.bind("<<ListboxSelect>>", self.onoffctrlelem)
         elif (inputtype is str) and (len(optionlist)>0):
             # create a dropdown menu
             self.var       = Tk.StringVar()
@@ -188,6 +202,16 @@ class inputwidget:
             self.var       = Tk.StringVar()
             self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
             self.tkentry.insert(0, repr(defaultval))
+        elif (inputtype is moretypes.filename):
+            self.var       = Tk.StringVar()
+            self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
+            if defaultval is not None: 
+                self.tkentry.insert(0, repr(defaultval))
+            # Add a button to choose filename
+            self.button    = Tk.Button(master=frame, 
+                                       text="Choose file", 
+                                       command=partial(self.choosefile, 
+                                                       fileopenopt))
         elif (isinstance(inputtype, list)):
             # Handle list inputs
             N              = len(inputtype)
@@ -208,6 +232,9 @@ class inputwidget:
                     self.tkentry[i].grid(row=row, column=1+i, sticky='w')
             else:
                 self.tkentry.grid(row=row, column=1, sticky='w')
+            if self.button is not None: 
+                self.button.grid(row=row, column=2, sticky='nw')
+
         return
 
     def getval(self):
@@ -248,7 +275,23 @@ class inputwidget:
                 self.tkentry.delete(0, Tk.END)
                 self.tkentry.insert(0, repr(val))
         return
-        
+
+    def choosefile(self, optiondict):
+        #filewin = Tk.Toplevel()   
+        print(optiondict)
+        selecttype = getdictval(optiondict, 'selecttype', 'open')
+        if selecttype=='open':
+            filename = filedialog.askopenfilename(initialdir = "./",
+                                                  title = "Select file")
+        elif selecttype=='saveas':
+            filename = filedialog.asksaveasfilename(initialdir = "./",
+                                                    title = "Select file")
+        elif selecttype=='directory':
+            filename = filedialog.askdirectory(initialdir = "./",
+                                               title = "Select directory")
+        self.tkentry.delete(0, Tk.END)
+        self.tkentry.insert(0, filename)
+        return filename
 
     def onoffframe(self):
         if self.var.get() == 1:
@@ -258,23 +301,79 @@ class inputwidget:
             for child in self.ctrlframe.winfo_children():
                 child.configure(state='disable')
         return
+
+    def onoffctrlelem(self, event):
+        currstate = self.getval()
+        # Handle the bool option first
+        if self.inputtype is bool:
+            for ielem, elem in enumerate(self.ctrlelem):
+                if 'activewhen' in elem:
+                    criteria  = elem['activewhen']
+                    condition = criteria[1]
+                else:
+                    condition = True
+                if bool(currstate)==bool(condition):
+                    framestate, inputstate = 'normal', 'normal'
+                else:
+                    framestate, inputstate = 'disable', 'disabled'
+                if elem.ctrlframe is not None:
+                    #print("Set "+elem['frame']+" to "+framestate)
+                    for child in elem.ctrlframe.winfo_children():
+                        child.configure(state=framestate)
+                if elem.ctrlinput is not None:
+                    #print("Set "+elem['input']+" to "+inputstate)
+                    if isinstance(elem.ctrlinput.tkentry, list):
+                        for entry in elem.ctrlinput.tkentry:
+                            entry.config(state=inputstate)
+                    else:
+                        elem.ctrlinput.tkentry.config(state=inputstate)  
+        # Handle the listbox option 
+        if self.inputtype == moretypes.listbox:
+            # Get the current state
+            #print("curr state = "+repr(currstate))
+            for ielem, elem in enumerate(self.ctrlelem):
+                criteria  = elem['activewhen']
+                optiontest= criteria[0]
+                condition = criteria[1]
+                #print("testing "+optiontest+" "+repr(condition))
+                if (optiontest in currstate) == bool(condition):
+                    # Passes test, let's activate/deactivate
+                    framestate, inputstate = 'normal', 'normal'
+                else:
+                    framestate, inputstate = 'disable', 'disabled'
+                if elem.ctrlframe is not None:
+                    #print("Set "+elem['frame']+" to "+framestate)
+                    for child in elem.ctrlframe.winfo_children():
+                        child.configure(state=framestate)
+                if elem.ctrlinput is not None:
+                    #print("Set "+elem['input']+" to "+inputstate)
+                    if isinstance(elem.ctrlinput.tkentry, list):
+                        for entry in elem.ctrlinput.tkentry:
+                            entry.config(state=inputstate)
+                    else:
+                        elem.ctrlinput.tkentry.config(state=inputstate)
+        return
+
+    def linkctrlelem(self, allframes, allinputs):
+        """
+        Link the ctrl elements to the frames/inputs to control
+        """
+        for ielem, elem in enumerate(self.ctrlelem):
+            # Attach it to the right thing
+            if 'frame' in elem:
+                self.ctrlelem[ielem].ctrlframe = allframes[elem['frame']]
+                self.ctrlelem[ielem].ctrlinput = None
+            elif 'input' in elem:
+                self.ctrlelem[ielem].ctrlframe = None
+                self.ctrlelem[ielem].ctrlinput = allinputs[elem['input']]
+            else:
+                print("Invalid ctrlelem specification in "+self.name)
+        return
     
     @classmethod
     def fromdict(cls, frame, d, allframes=None):        
         # Parse the dict
         name                        = d['name']
-        # if 'row' in d:        row   = d['row']
-        # else:                 row   = None
-        # if 'label' in d:      label = d['label']
-        # else:                 label = ''
-        # if 'defaultval' in d: defaultval = d['defaultval']
-        # else:                 defaultval = None
-        # if 'optionlist' in d: optionlist = d['optionlist']
-        # else:                 optionlist = []
-        # if 'labelonly' in d:  labelonly  = d['labelonly']
-        # else:                 labelonly = False
-        # if 'visible' in d:    visible  = d['visible']
-        # else:                 visible = True
         row        = getdictval(d, 'row',        None)
         label      = getdictval(d, 'label',      '')
         defaultval = getdictval(d, 'defaultval', None)
@@ -285,27 +384,22 @@ class inputwidget:
         ctrlframe = None
         if ('ctrlframe' in d) and (allframes is not None):
             ctrlframe = allframes[d['ctrlframe']]
-        # # Get the input type
-        # if 'inputtype' in d:  yamlinputtype    = d['inputtype']
-        # else:                 yamlinputtype    = 'str'
+        ctrlelem      = getdictval(d, 'ctrlelem',   None)
         yamlinputtype = getdictval(d, 'inputtype', 'str')
         if isinstance(yamlinputtype, list):
             inputtype = [typemap[x.lower()] for x in yamlinputtype]
         else:
             inputtype = typemap[yamlinputtype.lower()]
-        # if 'mergedboollist' in d:  mergedboollist = d['mergedboollist']
-        # else:                      mergedboollist = []
-        # # Output definitions
-        # if 'outputdef' in d:  outputdef = d['outputdef']
-        # else:                 outputdef = {}
         mergedboollist = getdictval(d, 'mergedboollist', [])
         outputdef  = getdictval(d, 'outputdef', {})
         listboxopt = getdictval(d, 'listboxopt', {})
+        fileopenopt= getdictval(d, 'fileopenopt', {})
         # Return the widget
         return cls(frame, row, inputtype, name, label,
                    defaultval=defaultval, optionlist=optionlist,
-                   listboxopt=listboxopt,
-                   ctrlframe=ctrlframe, labelonly=labelonly,
+                   listboxopt=listboxopt, fileopenopt=fileopenopt,
+                   ctrlframe=ctrlframe,   ctrlelem=ctrlelem,
+                   labelonly=labelonly,
                    outputdef=outputdef, mergedboollist=mergedboollist,
                    visible=visible)
 # -- Done inputwidget --
@@ -535,6 +629,11 @@ class App(Tk.Tk, object):
             iwidget = inputwidget.fromdict(frame, widget,
                                           allframes=self.subframes)
             self.inputvars[name] = iwidget
+        # link any widgets necessary
+        for key,  inputvar in self.inputvars.items():
+            if self.inputvars[key].ctrlelem is not None:
+                self.inputvars[key].linkctrlelem(self.subframes, self.inputvars)
+                self.inputvars[key].onoffctrlelem(None)
 
         # -- Set up the buttons --
         if 'buttons' in yamldict:
