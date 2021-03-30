@@ -277,20 +277,38 @@ class inputwidget:
             val = None
         return val
 
-    def setval(self, val, strinput=False):
+    def setval(self, val, strinput=False, forcechange=False):
         """Update the contents with val"""
         if (isinstance(self.inputtype, list)):
             listval=val
             if strinput: listval = re.split(r'[,; ]+', val)
             # Input a list
             for i in range(len(self.inputtype)):
-                itkentry=self.tkentry[i]
-                print(repr(itkentry.get()))
+                itkentry= self.tkentry[i]
+                statedisabled= itkentry.cget('state') in ['disable','disabled']
+                if statedisabled and forcechange==False:
+                    print("CANNOT update: %s use forcechange=True in setval()"
+                          %self.name)
+                if statedisabled and forcechange:
+                    itkentry.config(state='normal')                    
+                #print(repr(itkentry.get()))
                 itkentry.delete(0, Tk.END)
-                itkentry.insert(0, "AAAA")
+                itkentry.insert(0, repr(listval[i]))
                 #self.tkentry[i].insert(0, repr(listval[i]))
-                print(repr(listval[i]), itkentry.get())
+                #print(repr(listval[i]), itkentry.get())
+                if statedisabled and forcechange: # Reset the state
+                    itkentry.config(state='disabled')                    
         else: 
+            # Check to see if entry is normal or disabled
+            if self.inputtype==moretypes.mergedboollist: 
+                statedisabled=False
+            else:
+                statedisabled=self.tkentry.cget('state') in ['disable','disabled']
+            if statedisabled and forcechange==False:
+                print("CANNOT update: %s use forcechange=True in setval()"
+                      %self.name)
+            if statedisabled and forcechange:
+                self.tkentry.config(state='normal') 
             # Handle scalars
             if self.inputtype is bool:
                 boolval = bool_str(val) if strinput else val
@@ -328,6 +346,8 @@ class inputwidget:
                 # Set a string in the entry
                 self.tkentry.delete(0, Tk.END)
                 self.tkentry.insert(0, repr(val))
+            if statedisabled and forcechange: # Reset the state
+                self.tkentry.config(state='disabled')                    
         return
 
     def choosefile(self, optiondict):
@@ -712,8 +732,8 @@ class App(Tk.Tk, object):
         #button = Tk.Button(master=self.notebook.tab('Tab 1'),text="update plt", 
         #                  command=self.updateplot).grid(column=0, padx=5, sticky='w')
         #self.inputvars['mergedbool1'].setval('off1 off2 off3', strinput=True)
-        self.inputvars['input_2'].setval([-143, -3.1, "stuffA"])
-        print(self.getoutputdefdict('AMR-Wind'))
+        #self.inputvars['input_2'].setval([-143, -3.1, "stuffA"])
+        #print(self.getoutputdefdict('AMR-Wind'))
         print(self.setinputfromdict('AMR-Wind', yamldict['setfromdict']))
         self.formatgridrows()
         return
@@ -745,13 +765,16 @@ class App(Tk.Tk, object):
         return tagdict
 
     def setinputfromdict(self, tag, inputdict):
+        extradict=inputdict.copy()
         # Get the dictionary
         tagdict = self.getoutputdefdict(tag)
         for key, item in inputdict.items():
             if key in tagdict:
-                tagdict[key].setval(item, strinput=isinstance(item,str))
-                inputdict.pop(key)
-        return inputdict
+                tagdict[key].setval(item, 
+                                    strinput=isinstance(item,str),
+                                    forcechange=True)
+                extradict.pop(key)
+        return extradict  # Return any unused entries
     
     def updateplot(self):
         input1=self.inputvars['input_1'].getval()
