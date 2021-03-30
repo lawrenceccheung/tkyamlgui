@@ -66,11 +66,14 @@ def to_bool(bool_str):
     """Parse the string and return the boolean value encoded or raise an
     exception
     """
-    if isinstance(bool_str, basestring) and bool_str: 
-        if bool_str.lower() in ['true', 't', '1']: return True
-    elif bool_str.lower() in ['false', 'f', '0']: return False
+    #if isinstance(bool_str, basestring) and bool_str: 
+    if isinstance(bool_str, basestring):
+        if bool_str.lower() in ['true', 't', '1']: 
+            return True
+        elif bool_str.lower() in ['false', 'f', '0']: 
+            return False
     #if here we couldn't parse it
-    raise ValueError("%s is no recognized as a boolean value" % bool_str)
+    raise ValueError("[%s] is not recognized as a boolean value" % bool_str)
 
 #
 # See https://stackoverflow.com/questions/58045626/scrollbar-in-tkinter-notebook-frames
@@ -293,7 +296,7 @@ class inputwidget:
                     itkentry.config(state='normal')                    
                 #print(repr(itkentry.get()))
                 itkentry.delete(0, Tk.END)
-                itkentry.insert(0, repr(listval[i]))
+                itkentry.insert(0, repr(listval[i]).strip("'").strip('"'))
                 #self.tkentry[i].insert(0, repr(listval[i]))
                 #print(repr(listval[i]), itkentry.get())
                 if statedisabled and forcechange: # Reset the state
@@ -311,12 +314,12 @@ class inputwidget:
                 self.tkentry.config(state='normal') 
             # Handle scalars
             if self.inputtype is bool:
-                boolval = bool_str(val) if strinput else val
+                boolval = to_bool(val) if strinput else val
                 #print("Set "+self.name+" to "+repr(val))
                 self.var.set(boolval)
                 if self.ctrlelem is not None: self.onoffctrlelem(None)
             elif (self.inputtype is str) and len(self.optionlist)>0:
-                self.tkvar.set(val)
+                self.var.set(val.strip("'").strip('"'))
             elif self.inputtype==moretypes.listbox:
                 listval = val
                 if strinput: listval = re.split(r'[,; ]+', val)
@@ -347,7 +350,7 @@ class inputwidget:
             else:
                 # Set a string in the entry
                 self.tkentry.delete(0, Tk.END)
-                self.tkentry.insert(0, repr(val))
+                self.tkentry.insert(0, repr(val).strip("'").strip('"'))
             if statedisabled and forcechange: # Reset the state
                 self.tkentry.config(state='disabled')                    
         return
