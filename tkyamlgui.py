@@ -734,7 +734,7 @@ class App(Tk.Tk, object):
         #self.inputvars['mergedbool1'].setval('off1 off2 off3', strinput=True)
         #self.inputvars['input_2'].setval([-143, -3.1, "stuffA"])
         #print(self.getoutputdefdict('AMR-Wind'))
-        print(self.setinputfromdict('AMR-Wind', yamldict['setfromdict']))
+        #print(self.setinputfromdict('AMR-Wind', yamldict['setfromdict']))
         self.formatgridrows()
         return
 
