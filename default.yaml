@@ -98,9 +98,9 @@ inputwidgets:
     tab:        Tab 2
     inputtype:  mergedboollist
     mergedboollist:
-      - ['bool1', 'on1', '']
-      - ['bool2', 'on2', '']
-      - ['bool3', 'on3', '']
+      - ['bool1', 'on1', 'off1']
+      - ['bool2', 'on2', 'off2']
+      - ['bool3', 'on3', 'off3']
 
   - name:       listbox1
     label:      Choose your option

@@ -19,7 +19,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from functools import partial
 from collections import OrderedDict 
-import sys, os
+import sys, os, re
 from enum import Enum
 
 if sys.version_info[0] < 3:
@@ -289,7 +289,9 @@ class inputwidget:
             # Handle scalars
             if self.inputtype is bool:
                 boolval = bool_str(val) if strinput else val
-                self.tkvar.set(boolval)
+                #print("Set "+self.name+" to "+repr(val))
+                self.var.set(boolval)
+                if self.ctrlelem is not None: self.onoffctrlelem(None)
             elif (self.inputtype is str) and len(self.optionlist)>0:
                 self.tkvar.set(val)
             elif self.inputtype==moretypes.listbox:
@@ -298,9 +300,27 @@ class inputwidget:
                     self.tkentry.selection_set(self.optionlist.index(v))
             elif self.inputtype==moretypes.mergedboollist:
                 allboolstrs=[item for sublist in self.mergedboollist for item in sublist[1:]]
-                #if '' in allboolstrs:
-                #else:
+                listval=val
+                if strinput: listval = re.split(r'[,; ]+', val)                
+                if '' in allboolstrs:
+                    # Could be in any order
+                    for boolinput in self.mergedboollist:
+                        if boolinput[1] in listval:
+                            self.allinputs[boolinput[0]].setval(True)
+                        else:
+                            self.allinputs[boolinput[0]].setval(False)
+                else:
+                    # Take it in order
+                    for istr, strinput in enumerate(listval):
+                        boolinput=self.mergedboollist[istr]
+                        if strinput.lower()==boolinput[1].lower():
+                            self.allinputs[boolinput[0]].setval(True)
+                        elif strinput.lower()==boolinput[2].lower():
+                            self.allinputs[boolinput[0]].setval(False)
+                        else:
+                            raise ValueError("%s is not either %s or %s."%(strinput, boolinput[1], boolinput[2]))
             else:
+                # Set a string in the entry
                 self.tkentry.delete(0, Tk.END)
                 self.tkentry.insert(0, repr(val))
         return
@@ -686,7 +706,7 @@ class App(Tk.Tk, object):
         # -- Button demonstrating update plots --        
         #button = Tk.Button(master=self.notebook.tab('Tab 1'),text="update plt", 
         #                  command=self.updateplot).grid(column=0, padx=5, sticky='w')
-
+        #self.inputvars['mergedbool1'].setval('off1 off2 off3', strinput=True)
         self.formatgridrows()
         return
 
