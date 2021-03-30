@@ -33,7 +33,7 @@ inputwidgets:
       - frame:  frameA
         activewhen: ['', 0]
     outputdef:
-      AMR-Wind: incflo.input_0
+      AMR-Wind: incflo.bool0
       
   - name: input_1
     label: input_1 description
@@ -41,12 +41,16 @@ inputwidgets:
     inputtype: int 
     defaultval: 1
     visible: True
+    outputdef:
+      AMR-Wind: incflo.int1
 
   - name: input_2
     label: "list input  "
     frame:  frameA
     inputtype: [int, float, str] 
     defaultval: [1, 2.0, stuff]
+    outputdef:
+      AMR-Wind: incflo.list1
 
   - name: input_3
     label: "list of options"
@@ -156,3 +160,8 @@ buttons:
     tab:  Tab 2
     command: "partial(pullvals, self.inputvars, statuslabel=self.statusbar)"
     
+
+setfromdict:
+  incflo.bool0: 1
+  incflo.int1:  123
+  incflo.list1: [-1, 3.1, stuffA]

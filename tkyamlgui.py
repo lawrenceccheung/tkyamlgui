@@ -284,7 +284,12 @@ class inputwidget:
             if strinput: listval = re.split(r'[,; ]+', val)
             # Input a list
             for i in range(len(self.inputtype)):
-                self.tkentry[i].insert(0, repr(listval[i]))
+                itkentry=self.tkentry[i]
+                print(repr(itkentry.get()))
+                itkentry.delete(0, Tk.END)
+                itkentry.insert(0, "AAAA")
+                #self.tkentry[i].insert(0, repr(listval[i]))
+                print(repr(listval[i]), itkentry.get())
         else: 
             # Handle scalars
             if self.inputtype is bool:
@@ -707,6 +712,9 @@ class App(Tk.Tk, object):
         #button = Tk.Button(master=self.notebook.tab('Tab 1'),text="update plt", 
         #                  command=self.updateplot).grid(column=0, padx=5, sticky='w')
         #self.inputvars['mergedbool1'].setval('off1 off2 off3', strinput=True)
+        self.inputvars['input_2'].setval([-143, -3.1, "stuffA"])
+        print(self.getoutputdefdict('AMR-Wind'))
+        print(self.setinputfromdict('AMR-Wind', yamldict['setfromdict']))
         self.formatgridrows()
         return
 
@@ -726,6 +734,25 @@ class App(Tk.Tk, object):
         val=self.inputvars[source].getval()
         self.inputvars[target].setval(val)
 
+    def getoutputdefdict(self, tag, allinputs=None):
+        tagdict = OrderedDict()
+        if allinputs is None:
+            allinputs=self.inputvars
+        for key, inputvar in allinputs.items():
+            if tag in inputvar.outputdef:
+                outputkey = inputvar.outputdef[tag]
+                tagdict[outputkey] = allinputs[key]
+        return tagdict
+
+    def setinputfromdict(self, tag, inputdict):
+        # Get the dictionary
+        tagdict = self.getoutputdefdict(tag)
+        for key, item in inputdict.items():
+            if key in tagdict:
+                tagdict[key].setval(item, strinput=isinstance(item,str))
+                inputdict.pop(key)
+        return inputdict
+    
     def updateplot(self):
         input1=self.inputvars['input_1'].getval()
         w,h1 = self.winfo_width(), self.winfo_height()
