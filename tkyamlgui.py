@@ -318,7 +318,9 @@ class inputwidget:
             elif (self.inputtype is str) and len(self.optionlist)>0:
                 self.tkvar.set(val)
             elif self.inputtype==moretypes.listbox:
-                for v in defaultval:
+                listval = val
+                if strinput: listval = re.split(r'[,; ]+', val)
+                for v in listval:
                     # set the value to active
                     self.tkentry.selection_set(self.optionlist.index(v))
             elif self.inputtype==moretypes.mergedboollist:
