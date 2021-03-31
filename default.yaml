@@ -162,6 +162,16 @@ buttons:
     tab:  Tab 2
     command: "partial(pullvals, self.inputvars, statuslabel=self.statusbar)"
 
+  - name: openpopup
+    text: Open pop up vals    
+    tab:  Tab 2
+    command: self.popupwin
+  
+  - name: printpopup
+    text: Print pop up vals    
+    tab:  Tab 2
+    command: self.printpuwindict
+
 popupwindow:
   popup1:
     title:  Window title
@@ -170,10 +180,16 @@ popupwindow:
       label:      Some bool
       inputtype:  bool
       defaultval: 1
+      ctrlelem:
+        - input:  popup1_input1
     - name:       popup1_input1
       label:      input_1 description
       inputtype:  int 
       defaultval: 123
+    - name:       popup1_input2
+      label:      input_2 description
+      inputtype:  [float, float, float]
+      defaultval: [-1, 0, 1]
       
 setfromdict:
   incflo.bool0: 1

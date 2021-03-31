@@ -169,7 +169,6 @@ class inputwidget:
 
         if inputtype == moretypes.mergedboollist: return
 
-        #self.tklabel.grid(row=row, column=0, sticky='w')
         if visible:
             if row is None:  
                 self.tklabel.grid(column=0, sticky='nw', padx=5)
@@ -186,12 +185,6 @@ class inputwidget:
             else:
                 self.tkentry   = Tk.Checkbutton(frame, variable=self.var, 
                                                 command=partial(self.onoffctrlelem, None))
-            # if self.ctrlframe is None:
-            #     self.tkentry   = Tk.Checkbutton(frame, variable=self.var)
-            # else:
-            #     self.tkentry   = Tk.Checkbutton(frame, variable=self.var, 
-            #                                     command=self.onoffframe)
-            #     self.onoffframe()
         elif (inputtype is moretypes.listbox):
             height=max(3,len(optionlist))
             self.tkentry   = Tk.Listbox(frame, height=height,
@@ -484,6 +477,60 @@ class inputwidget:
                    allinputs=allinputs, visible=visible)
 # -- Done inputwidget --
 
+class popupwindow(Tk.Toplevel):
+    """
+    Creates a pop-up window
+    """
+    def __init__(self, master, defdict, stored_inputvars, initnew=True):
+        self.master = master
+        super().__init__(self.master)
+
+        if 'title' in defdict: self.wm_title(defdict['title'])
+
+        self.stored_inputvars=stored_inputvars
+        if not stored_inputvars:
+            # Initialize the values
+            for widget in defdict['inputwidgets']:
+                self.stored_inputvars[widget['name']] = widget['defaultval']
+
+        # populate the window
+        self.temp_inputvars = OrderedDict()
+        for widget in defdict['inputwidgets']:
+            widgetcopy = widget.copy()
+            name       = widgetcopy['name']
+            widgetcopy['defaultval'] = self.stored_inputvars[name]
+            iwidget = inputwidget.fromdict(self, widgetcopy,
+                                           allinputs=self.temp_inputvars)
+            self.temp_inputvars[name] = iwidget
+        # link any widgets necessary
+        for key,  inputvar in self.temp_inputvars.items():
+            if self.temp_inputvars[key].ctrlelem is not None:
+                self.temp_inputvars[key].linkctrlelem(None, self.temp_inputvars)
+                self.temp_inputvars[key].onoffctrlelem(None)
+
+        # Add the save button
+        row, col = self.grid_size()
+        Tk.Button(self,text='Save',command=self.savevals).grid(row=row,column=0)
+        # Add the close button
+        Tk.Button(self,text='Close',command=self.okclose).grid(row=row,column=1)
+
+    def savevals(self):
+        for key, widget in self.stored_inputvars.items():
+            val = self.temp_inputvars[key].getval()
+            self.stored_inputvars[key] = val
+
+    def okclose(self):
+        self.savevals()
+        self.destroy()
+
+    def printvals(self):
+        for key, widget in self.stored_inputvars.items():
+            val = self.stored_inputvars[key]
+            print(key+" "+repr(val))
+        return
+
+# -- Done popupwindow --
+
 def donothing(toproot):
     filewin = Tk.Toplevel(toproot)
     button = Tk.Button(filewin, text="Do nothing button")
@@ -671,6 +718,7 @@ class App(Tk.Tk, object):
             if useruemel: Loader=yaml.load
             else:         Loader=yaml.safe_load
             yamldict = Loader(fp)
+        self.yamldict=yamldict
 
         # -- Set up the tabs --
         self.alltabslist = yamldict['tabs']
@@ -713,6 +761,8 @@ class App(Tk.Tk, object):
                 self.inputvars[key].linkctrlelem(self.subframes, self.inputvars)
                 self.inputvars[key].onoffctrlelem(None)
 
+        self.puwindict={}
+
         # -- Set up the buttons --
         if 'buttons' in yamldict:
             for button in yamldict['buttons']:
@@ -741,6 +791,8 @@ class App(Tk.Tk, object):
         #print(self.getoutputdefdict('AMR-Wind'))
         #print(self.setinputfromdict('AMR-Wind', yamldict['setfromdict']))
         #self.setuppopupwin(yamldict['popupwindow']['popup1'])
+        #puwin=popupwindow(self, yamldict['popupwindow']['popup1'], self.puwindict)
+        #puwin.printvals()
         self.formatgridrows()
         return
 
@@ -825,21 +877,14 @@ class App(Tk.Tk, object):
         root.config(menu=menubar)
         return
 
-    def setuppopupwin(self, popupwindict, toproot=None):
-        if toproot is None: win = Tk.Toplevel(self)
-        else:               win = Tk.Toplevel(toproot)
 
-        if 'title' in popupwindict: win.wm_title(popupwindict['title'])
-        
-        # Set up the input widgets
-        popupinput = OrderedDict()
-        for widget in popupwindict['inputwidgets']:
-            name  = widget['name']
-            #frame = self.tabframeselector(widget)
-            iwidget = inputwidget.fromdict(win, widget,
-                                           allinputs=popupinput)
-            popupinput[name] = iwidget        
-        return popupinput
+    def printpuwindict(self):
+        print(self.puwindict)
+
+    def popupwin(self):
+        popupwindow(self, self.yamldict['popupwindow']['popup1'], 
+                    self.puwindict)
+
     
 if __name__ == "__main__":
     App().mainloop()
