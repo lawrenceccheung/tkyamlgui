@@ -502,31 +502,31 @@ def pullvals(inputs, statuslabel=None):
     print("--- pulled values ---")
     return
 
-def dummyMenu(root):
-    """ 
-    Adds a menu bar to root
-    See https://www.tutorialspoint.com/python/tk_menu.htm
-    """
-    menubar  = Tk.Menu(root)
+# def dummyMenu(root):
+#     """ 
+#     Adds a menu bar to root
+#     See https://www.tutorialspoint.com/python/tk_menu.htm
+#     """
+#     menubar  = Tk.Menu(root)
 
-    # File menu
-    filemenu = Tk.Menu(menubar, tearoff=0)
-    filemenu.add_command(label="New", command=partial(donothing, root))
-    filemenu.add_command(label="Open", command=partial(donothing, root))
-    filemenu.add_command(label="Save", command=partial(donothing, root))
-    filemenu.add_command(label="Save as...", command=partial(donothing, root))
-    filemenu.add_command(label="Close", command=partial(donothing, root))
-    filemenu.add_separator()
-    filemenu.add_command(label="Exit", command=root.quit)
-    menubar.add_cascade(label="File", menu=filemenu)
+#     # File menu
+#     filemenu = Tk.Menu(menubar, tearoff=0)
+#     filemenu.add_command(label="New", command=partial(donothing, root))
+#     filemenu.add_command(label="Open", command=partial(donothing, root))
+#     filemenu.add_command(label="Save", command=partial(donothing, root))
+#     filemenu.add_command(label="Save as...", command=partial(donothing, root))
+#     filemenu.add_command(label="Close", command=partial(donothing, root))
+#     filemenu.add_separator()
+#     filemenu.add_command(label="Exit", command=root.quit)
+#     menubar.add_cascade(label="File", menu=filemenu)
 
-    # Help menu
-    helpmenu = Tk.Menu(menubar, tearoff=0)
-    helpmenu.add_command(label="Help Index", command=partial(donothing, root))
-    helpmenu.add_command(label="About...", command=partial(donothing, root))
-    menubar.add_cascade(label="Help", menu=helpmenu)
+#     # Help menu
+#     helpmenu = Tk.Menu(menubar, tearoff=0)
+#     helpmenu.add_command(label="Help Index", command=partial(donothing, root))
+#     helpmenu.add_command(label="About...", command=partial(donothing, root))
+#     menubar.add_cascade(label="Help", menu=helpmenu)
 
-    root.config(menu=menubar)
+#     root.config(menu=menubar)
 
 
 # Run all of the gui elements
@@ -636,7 +636,7 @@ class App(Tk.Tk, object):
         self.geometry("1050x575")
         # Set up the menu bar
         if menufunc is not None:   menufunc(self)
-        else:                      dummyMenu(self)
+        else:                      self.menubar(self)
 
         # Set up the status bar
         self.statusbar = Tk.Label(self, text="%200s"%" ", 
@@ -797,6 +797,31 @@ class App(Tk.Tk, object):
         #self.figcanvas.show()
         return
 
+    def menubar(self, root):
+        """ 
+        Adds a menu bar to root
+        See https://www.tutorialspoint.com/python/tk_menu.htm
+        """
+        menubar  = Tk.Menu(root)
+
+        # File menu
+        filemenu = Tk.Menu(menubar, tearoff=0)
+        filemenu.add_command(label="New", command=partial(donothing, root))
+        filemenu.add_command(label="Open", command=partial(donothing, root))
+        filemenu.add_command(label="Save", command=partial(donothing, root))
+        filemenu.add_command(label="Save as...", command=partial(donothing, root))
+        filemenu.add_command(label="Close", command=partial(donothing, root))
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=root.quit)
+        menubar.add_cascade(label="File", menu=filemenu)
+
+        # Help menu
+        helpmenu = Tk.Menu(menubar, tearoff=0)
+        helpmenu.add_command(label="Help Index", command=partial(donothing, root))
+        helpmenu.add_command(label="About...", command=partial(donothing, root))
+        menubar.add_cascade(label="Help", menu=helpmenu)
+        
+        root.config(menu=menubar)
         
 if __name__ == "__main__":
     App().mainloop()
