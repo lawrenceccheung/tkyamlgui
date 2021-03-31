@@ -477,13 +477,13 @@ class inputwidget:
                    allinputs=allinputs, visible=visible)
 # -- Done inputwidget --
 
-class popupwindow(Tk.Toplevel):
+class popupwindow(Tk.Toplevel, object):
     """
     Creates a pop-up window
     """
-    def __init__(self, master, defdict, stored_inputvars, initnew=True):
+    def __init__(self, parent, master, defdict, stored_inputvars, initnew=True):
         self.master = master
-        super().__init__(self.master)
+        super(popupwindow, self).__init__(parent)
 
         if 'title' in defdict: self.wm_title(defdict['title'])
 
@@ -882,7 +882,7 @@ class App(Tk.Tk, object):
         print(self.puwindict)
 
     def popupwin(self):
-        popupwindow(self, self.yamldict['popupwindow']['popup1'], 
+        popupwindow(self, self,  self.yamldict['popupwindow']['popup1'], 
                     self.puwindict)
 
     
