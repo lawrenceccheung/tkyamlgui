@@ -170,10 +170,12 @@ class inputwidget:
         if inputtype == moretypes.mergedboollist: return
 
         if visible:
+            cspan=3 if labelonly else 1
             if row is None:  
-                self.tklabel.grid(column=0, sticky='nw', padx=5)
+                self.tklabel.grid(column=0, columnspan=cspan,sticky='nw',padx=5)
             else:            
-                self.tklabel.grid(row=row, column=0, sticky='nw', padx=5)
+                self.tklabel.grid(row=row, columnspan=cspan,
+                                  column=0, sticky='nw', padx=5)
         if labelonly: return None
 
         if inputtype is bool:
@@ -495,14 +497,16 @@ class popupwindow(Tk.Toplevel, object):
         if not stored_inputvars:
             # Initialize the values
             for widget in defdict['inputwidgets']:
-                self.stored_inputvars[widget['name']] = widget['defaultval']
+                if getdictval(widget, 'labelonly', False) == False:
+                    self.stored_inputvars[widget['name']] = widget['defaultval']
 
         # populate the window
         self.temp_inputvars = OrderedDict()
         for widget in defdict['inputwidgets']:
             widgetcopy = widget.copy()
             name       = widgetcopy['name']
-            widgetcopy['defaultval'] = self.stored_inputvars[name]
+            if getdictval(widget, 'labelonly', False) is False: 
+                widgetcopy['defaultval'] = self.stored_inputvars[name]
             iwidget = inputwidget.fromdict(self, widgetcopy,
                                            allinputs=self.temp_inputvars)
             self.temp_inputvars[name] = iwidget
@@ -511,15 +515,19 @@ class popupwindow(Tk.Toplevel, object):
             if self.temp_inputvars[key].ctrlelem is not None:
                 self.temp_inputvars[key].linkctrlelem(None, self.temp_inputvars)
                 self.temp_inputvars[key].onoffctrlelem(None)
-
+            
         # Add the save button
-        row, col = self.grid_size()
+        row = len(defdict['inputwidgets'])+1  #row+3
         col=0
         if savebutton:
             Tk.Button(self,text=savebtxt,command=self.savevals).grid(row=row, column=0)
             col=1
         # Add the close button
         Tk.Button(self,text=closebtxt, command=self.okclose).grid(row=row, column=col)
+        col_count, row_count = self.grid_size()
+        for n in range(row_count): 
+            self.grid_rowconfigure(n, minsize=25)
+
 
     def savevals(self):
         for key, widget in self.stored_inputvars.items():
@@ -869,14 +877,22 @@ class App(Tk.Tk, object):
                 self.inputvars[key].linkctrlelem(self.subframes, self.inputvars)
                 self.inputvars[key].onoffctrlelem(None)
 
+        # -- Initialize the startup pop-up windows --
+        self.popup_storteddata = OrderedDict()
+        if 'popupwindow' in yamldict:
+            for key, win in yamldict['popupwindow'].items():
+                if win['loadonstart'] == True:
+                    self.popup_storteddata[key] = OrderedDict()
+        
         # Example, DELETE THIS LATER
         self.puwindict={}
 
         # -- Set up the listbox pop-up windows --
-        for listboxdict in yamldict['listboxpopupwindows']:
-            frame  = self.tabframeselector(listboxdict)
-            popupdict = yamldict['popupwindow'][listboxdict['popupinput']]
-            listboxpopupwindows(frame, listboxdict, popupdict)
+        if 'listboxpopupwindows' in yamldict:
+            for listboxdict in yamldict['listboxpopupwindows']:
+                frame  = self.tabframeselector(listboxdict)
+                popupdict = yamldict['popupwindow'][listboxdict['popupinput']]
+                listboxpopupwindows(frame, listboxdict, popupdict)
 
         # -- Set up the buttons --
         if 'buttons' in yamldict:
@@ -990,14 +1006,12 @@ class App(Tk.Tk, object):
         root.config(menu=menubar)
         return
 
-
     def printpuwindict(self):
         print(self.puwindict)
 
-    def popupwin(self):
-        popupwindow(self, self,  self.yamldict['popupwindow']['popup1'], 
-                    self.puwindict)
-
+    def launchpopupwin(self, key):
+        popupwindow(self, self,  self.yamldict['popupwindow'][key], 
+                    self.popup_storteddata[key])
     
 if __name__ == "__main__":
     App().mainloop()

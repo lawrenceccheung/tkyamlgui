@@ -165,7 +165,7 @@ buttons:
   - name: openpopup
     text: Open pop up vals    
     tab:  Tab 2
-    command: self.popupwin
+    command: "partial(self.launchpopupwin, 'popup2')" #self.popupwin
   
   - name: printpopup
     text: Print pop up vals    
@@ -196,6 +196,19 @@ popupwindow:
       label:      input_2 description
       inputtype:  [float, float, float]
       defaultval: [-1, 0, 1]
+  popup2:
+    title:  Window title 2           # optional
+    datakeyname:  popup2_name        # optional
+    loadonstart:  True               # optional
+    inputwidgets:
+    - name:       popup2_name
+      label:      Name of stuff
+      inputtype:  str
+      defaultval: name
+    - name:       popup2_input0
+      label:      Some bool
+      inputtype:  bool
+      defaultval: 1
 
 listboxpopupwindows:
   - name:       listboxpopup1
