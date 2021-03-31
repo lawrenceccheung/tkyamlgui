@@ -740,6 +740,7 @@ class App(Tk.Tk, object):
         #self.inputvars['input_2'].setval([-143, -3.1, "stuffA"])
         #print(self.getoutputdefdict('AMR-Wind'))
         #print(self.setinputfromdict('AMR-Wind', yamldict['setfromdict']))
+        #self.setuppopupwin(yamldict['popupwindow']['popup1'])
         self.formatgridrows()
         return
 
@@ -822,6 +823,23 @@ class App(Tk.Tk, object):
         menubar.add_cascade(label="Help", menu=helpmenu)
         
         root.config(menu=menubar)
+        return
+
+    def setuppopupwin(self, popupwindict, toproot=None):
+        if toproot is None: win = Tk.Toplevel(self)
+        else:               win = Tk.Toplevel(toproot)
+
+        if 'title' in popupwindict: win.wm_title(popupwindict['title'])
         
+        # Set up the input widgets
+        popupinput = OrderedDict()
+        for widget in popupwindict['inputwidgets']:
+            name  = widget['name']
+            #frame = self.tabframeselector(widget)
+            iwidget = inputwidget.fromdict(win, widget,
+                                           allinputs=popupinput)
+            popupinput[name] = iwidget        
+        return popupinput
+    
 if __name__ == "__main__":
     App().mainloop()

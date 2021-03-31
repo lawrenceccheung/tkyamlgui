@@ -161,8 +161,20 @@ buttons:
     text: pull vars
     tab:  Tab 2
     command: "partial(pullvals, self.inputvars, statuslabel=self.statusbar)"
-    
 
+popupwindow:
+  popup1:
+    title:  Window title
+    inputwidgets:
+    - name:       popup1_input0
+      label:      Some bool
+      inputtype:  bool
+      defaultval: 1
+    - name:       popup1_input1
+      label:      input_1 description
+      inputtype:  int 
+      defaultval: 123
+      
 setfromdict:
   incflo.bool0: 1
   incflo.int1:  123
