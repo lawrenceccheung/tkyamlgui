@@ -217,7 +217,7 @@ class inputwidget:
             self.var       = Tk.StringVar()
             self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
             if defaultval is not None: 
-                self.tkentry.insert(0, repr(defaultval))
+                self.tkentry.insert(0, repr(defaultval).strip("'").strip('"'))
             # Add a button to choose filename
             self.button    = Tk.Button(master=frame, 
                                        text="Choose file", 
@@ -682,22 +682,28 @@ class listboxpopupwindows():
         return
 
     def dumpdict(self, tag, onlyactive=True, keyfunc=None):
-        sep = ['.']
+        sep = '.'
         output = OrderedDict()
         # Get a list of all entries
         itemlist = [key for key, item in self.alldataentries.items()]
+        if len(itemlist)<1: return output
         if 'outputprefix' in self.listboxdict:
             outputpre  = getdictval(self.listboxdict['outputprefix'], tag, '')
         if 'outputlist' in self.listboxdict:
             outputlist = getdictval(self.listboxdict['outputlist'], tag, '')
-            key = outputpre + sep[0] + outputlist
+            key = outputpre + sep + outputlist
             output[key] = ' '.join([str(elem) for elem in itemlist])
         for key, storeddata in self.alldataentries.items(): 
             p=popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
                           hidden=True)
-            for key, data in p.temp_inputvars.items(): 
+            for k, data in p.temp_inputvars.items(): 
                 if data.isactive() and onlyactive:
-                    output[key] = data.getval()
+                    if tag in data.outputdef:
+                        if keyfunc is None:
+                            storekey = key+'.'+data.outputdef[tag]
+                        else:
+                            storekey = keyfunc(key, self.listboxdict, data.outputdef)
+                        output[storekey] = data.getval()
                     #print("dump key %s"%key+" "+repr(data.getval()))
             p.destroy()
         return output
@@ -882,7 +888,7 @@ class App(Tk.Tk, object):
         self.figcanvas.get_tk_widget().grid(row=0, column=0, sticky='nsew')
 
         # The input frame is leftframe
-        self.leftframe=Tk.Frame(self, width=leftframew)
+        self.leftframe=Tk.Frame(self, width=leftframew, height=530)
         self.leftframe.grid(row=0, column=0, sticky='nsew')
         self.leftframe.grid_propagate(0)
 
@@ -941,9 +947,6 @@ class App(Tk.Tk, object):
                 if win['loadonstart'] == True:
                     self.popup_storteddata[key] = OrderedDict()
         
-        # Example, DELETE THIS LATER
-        self.puwindict={}
-
         # -- Set up the listbox pop-up windows --
         if 'listboxpopupwindows' in yamldict:
             self.listboxpopupwindict = OrderedDict()
@@ -1086,6 +1089,9 @@ class App(Tk.Tk, object):
                 output[outputkey] = self.getInputVal(var)
         return output
 
-    
+    def launchpopupwin(self, key):
+        popupwindow(self, self,  self.yamldict['popupwindow'][key], 
+                    self.popup_storteddata[key])
+        
 if __name__ == "__main__":
     App().mainloop()

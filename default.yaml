@@ -162,10 +162,10 @@ buttons:
     tab:  Tab 2
     command: "partial(pullvals, self.inputvars, statuslabel=self.statusbar)"
 
-#  - name: openpopup
-#    text: Open pop up vals    
-#    tab:  Tab 2
-#    command: "partial(self.launchpopupwin, 'popup2')" #self.popupwin
+  - name: openpopup
+    text: Open pop up vals    
+    tab:  Tab 2
+    command: "partial(self.launchpopupwin, 'popup2')" #self.popupwin
   
 #  - name: printpopup
 #    text: Print pop up vals    
