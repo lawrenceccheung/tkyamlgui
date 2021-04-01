@@ -67,7 +67,7 @@ def to_bool(bool_str):
     exception
     """
     #if isinstance(bool_str, basestring) and bool_str: 
-    if isinstance(bool_str, basestring):
+    if isinstance(bool_str, str):
         if bool_str.lower() in ['true', 't', '1']: 
             return True
         elif bool_str.lower() in ['false', 'f', '0']: 
@@ -485,20 +485,22 @@ class popupwindow(Tk.Toplevel, object):
     """
     def __init__(self, parent, master, defdict, stored_inputvars, 
                  extraclosefunc=None, savebutton=True, 
-                 savebtxt='Save', closebtxt='Close'):
-        super(popupwindow, self).__init__(parent)
+                 savebtxt='Save', closebtxt='Close', quitafterinit=False):
+        if not quitafterinit: 
+            super(popupwindow, self).__init__(parent)
+            if 'title' in defdict: self.wm_title(defdict['title'])
+
         self.master = master
         self.extraclosefunc = extraclosefunc
         self.datakeyname    = getdictval(defdict, 'datakeyname', None)
-
-        if 'title' in defdict: self.wm_title(defdict['title'])
-
         self.stored_inputvars=stored_inputvars
+
+        # Initialize the values if stored_inputvars is empty
         if not stored_inputvars:
-            # Initialize the values
             for widget in defdict['inputwidgets']:
                 if getdictval(widget, 'labelonly', False) == False:
                     self.stored_inputvars[widget['name']] = widget['defaultval']
+        if quitafterinit: return
 
         # populate the window
         self.temp_inputvars = OrderedDict()
@@ -594,6 +596,23 @@ class listboxpopupwindows():
         # Add the entry to the data
         self.tkentry.insert(Tk.END, entryname)
         self.alldataentries[entryname] = storeddata.copy()
+
+    def populatefromdict(self, fromdict, deleteprevious=True):
+        if deleteprevious: 
+            self.tkentry.delete(0, Tk.END)
+            self.alldataentries.clear()
+        for itemkey, itemdict in fromdict.items():
+            #print(itemkey)
+            # First initialize a default data set
+            storeddata = OrderedDict()
+            popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+                        savebutton=False, quitafterinit=True)
+            # Then customize entry with stuff from item
+            for key, item in itemdict.items():
+                storeddata[key] = item
+            self.insertdata(storeddata)
+        self.rebuildlist()
+        return
 
     def rebuildlist(self):
         itemlist = [key for key, item in self.alldataentries.items()]
@@ -889,10 +908,12 @@ class App(Tk.Tk, object):
 
         # -- Set up the listbox pop-up windows --
         if 'listboxpopupwindows' in yamldict:
+            listboxpopupwindict = OrderedDict()
             for listboxdict in yamldict['listboxpopupwindows']:
                 frame  = self.tabframeselector(listboxdict)
+                name   = listboxdict['name']
                 popupdict = yamldict['popupwindow'][listboxdict['popupinput']]
-                listboxpopupwindows(frame, listboxdict, popupdict)
+                listboxpopupwindict[name] = listboxpopupwindows(frame, listboxdict, popupdict)
 
         # -- Set up the buttons --
         if 'buttons' in yamldict:
@@ -921,7 +942,9 @@ class App(Tk.Tk, object):
         #self.inputvars['input_2'].setval([-143, -3.1, "stuffA"])
         #print(self.getoutputdefdict('AMR-Wind'))
         #print(self.setinputfromdict('AMR-Wind', yamldict['setfromdict']))
-        
+
+        # Test the list box populate command
+        #listboxpopupwindict['listboxpopup1'].populatefromdict(yamldict['setlistboxfromdict']['listboxpopup1'])
         self.formatgridrows()
         return
 
