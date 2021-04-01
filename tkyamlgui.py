@@ -208,7 +208,7 @@ class inputwidget:
         elif (inputtype is str):
             self.var       = Tk.StringVar()
             self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
-            self.tkentry.insert(0, repr(defaultval))
+            self.tkentry.insert(0, repr(defaultval).strip("'").strip('"'))
         elif (inputtype is moretypes.filename):
             self.var       = Tk.StringVar()
             self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
@@ -481,9 +481,12 @@ class popupwindow(Tk.Toplevel, object):
     """
     Creates a pop-up window
     """
-    def __init__(self, parent, master, defdict, stored_inputvars, initnew=True):
-        self.master = master
+    def __init__(self, parent, master, defdict, stored_inputvars, 
+                 extraclosefunc=None, savebutton=True):
         super(popupwindow, self).__init__(parent)
+        self.master = master
+        self.extraclosefunc = extraclosefunc
+        self.datakeyname    = getdictval(defdict, 'datakeyname', None)
 
         if 'title' in defdict: self.wm_title(defdict['title'])
 
@@ -510,17 +513,26 @@ class popupwindow(Tk.Toplevel, object):
 
         # Add the save button
         row, col = self.grid_size()
-        Tk.Button(self,text='Save',command=self.savevals).grid(row=row,column=0)
+        col=0
+        if savebutton:
+            Tk.Button(self,text='Save',command=self.savevals).grid(row=row, column=0)
+            col=1
         # Add the close button
-        Tk.Button(self,text='Close',command=self.okclose).grid(row=row,column=1)
+        Tk.Button(self,text='Close',command=self.okclose).grid(row=row, column=col)
 
     def savevals(self):
         for key, widget in self.stored_inputvars.items():
             val = self.temp_inputvars[key].getval()
             self.stored_inputvars[key] = val
+        if self.datakeyname is not None:
+            return self.stored_inputvars[self.datakeyname]
+        else:
+            return None
 
     def okclose(self):
-        self.savevals()
+        dataname=self.savevals()
+        if self.extraclosefunc is not None:
+            self.extraclosefunc()
         self.destroy()
 
     def printvals(self):
@@ -530,6 +542,63 @@ class popupwindow(Tk.Toplevel, object):
         return
 
 # -- Done popupwindow --
+
+
+class listboxpopupwindows():
+    """
+    Creates a widget for editing a list of pop-up windows
+    """
+    def __init__(self, frame, listboxdict, popupwindict):
+        self.frame      = frame
+        self.popupwindict=popupwindict.copy()
+        self.height     = getdictval(listboxdict, 'height', 4)
+        self.row        = getdictval(listboxdict, 'row',    None)
+        self.listboxopt = getdictval(listboxdict, 'listboxopt', {})
+        self.label      = getdictval(listboxdict, 'label', 'Label')
+        self.tklabel    = Tk.Label(frame, text=self.label)
+        self.tkentry    = Tk.Listbox(self.frame, height=self.height,
+                                     exportselection=False, 
+                                     **self.listboxopt) 
+
+        self.alldataentries = OrderedDict()
+
+        # Add the objects
+        if self.row is None:  row, col = frame.grid_size()
+        else:                 row = self.row
+        self.tklabel.grid(row=row, column=0, sticky='nw', padx=5)
+        self.tkentry.grid(row=row, column=1, sticky='w')
+        
+        # Add the buttons
+        newb  = Tk.Button(master=self.frame, text='New',   command=self.new)
+        editb = Tk.Button(master=self.frame, text='Edit',  command=self.edit)
+        delb  = Tk.Button(master=self.frame, text='Delete',command=self.remove)
+        newb.grid(row=row+1,  column=0)
+        editb.grid(row=row+1, column=1)
+        delb.grid(row=row+1,  column=2)
+
+    def insertdata(self, storeddata):
+        Ndata = len(self.alldataentries)+1
+        datakeyname = getdictval(self.popupwindict, 'datakeyname', None)
+        entryname = repr(Ndata) if datakeyname is None else storeddata[datakeyname]
+        self.tkentry.insert(Tk.END, entryname)
+        self.alldataentries[entryname] = storeddata.copy()
+        print(self.alldataentries[entryname])
+
+    def new(self):
+        """Create a new input window entry"""
+        storeddata = OrderedDict()
+        popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+                    savebutton=False,
+                    extraclosefunc=partial(self.insertdata, storeddata))
+        return
+
+    def edit(self):
+        return
+
+    def remove(self):
+        return
+# -- Done listofpopupwindows --
+
 
 def donothing(toproot):
     filewin = Tk.Toplevel(toproot)
@@ -761,7 +830,14 @@ class App(Tk.Tk, object):
                 self.inputvars[key].linkctrlelem(self.subframes, self.inputvars)
                 self.inputvars[key].onoffctrlelem(None)
 
+        # Example, DELETE THIS LATER
         self.puwindict={}
+
+        # -- Set up the listbox pop-up windows --
+        for listboxdict in yamldict['listboxpopupwindows']:
+            frame  = self.tabframeselector(listboxdict)
+            popupdict = yamldict['popupwindow'][listboxdict['popupinput']]
+            listboxpopupwindows(frame, listboxdict, popupdict)
 
         # -- Set up the buttons --
         if 'buttons' in yamldict:
@@ -790,9 +866,8 @@ class App(Tk.Tk, object):
         #self.inputvars['input_2'].setval([-143, -3.1, "stuffA"])
         #print(self.getoutputdefdict('AMR-Wind'))
         #print(self.setinputfromdict('AMR-Wind', yamldict['setfromdict']))
-        #self.setuppopupwin(yamldict['popupwindow']['popup1'])
-        #puwin=popupwindow(self, yamldict['popupwindow']['popup1'], self.puwindict)
-        #puwin.printvals()
+        
+        #listboxpopupwindows(self.notebook.tab('Tab 3'),{}, {})
         self.formatgridrows()
         return
 

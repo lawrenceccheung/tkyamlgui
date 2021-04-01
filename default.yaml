@@ -174,8 +174,13 @@ buttons:
 
 popupwindow:
   popup1:
-    title:  Window title
+    title:  Window title             # optional
+    datakeyname:  popup1_name        # optional
     inputwidgets:
+    - name:       popup1_name
+      label:      Name of stuff
+      inputtype:  str
+      defaultval: name
     - name:       popup1_input0
       label:      Some bool
       inputtype:  bool
@@ -190,6 +195,13 @@ popupwindow:
       label:      input_2 description
       inputtype:  [float, float, float]
       defaultval: [-1, 0, 1]
+
+listboxpopupwindows:
+  - name:       listboxpopup1
+    label:      List of stuff
+    tab:        Tab 3
+    row:        0                   # optional
+    popupinput: popup1
       
 setfromdict:
   incflo.bool0: 1
