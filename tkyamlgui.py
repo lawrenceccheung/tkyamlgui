@@ -482,7 +482,8 @@ class popupwindow(Tk.Toplevel, object):
     Creates a pop-up window
     """
     def __init__(self, parent, master, defdict, stored_inputvars, 
-                 extraclosefunc=None, savebutton=True):
+                 extraclosefunc=None, savebutton=True, 
+                 savebtxt='Save', closebtxt='Close'):
         super(popupwindow, self).__init__(parent)
         self.master = master
         self.extraclosefunc = extraclosefunc
@@ -515,10 +516,10 @@ class popupwindow(Tk.Toplevel, object):
         row, col = self.grid_size()
         col=0
         if savebutton:
-            Tk.Button(self,text='Save',command=self.savevals).grid(row=row, column=0)
+            Tk.Button(self,text=savebtxt,command=self.savevals).grid(row=row, column=0)
             col=1
         # Add the close button
-        Tk.Button(self,text='Close',command=self.okclose).grid(row=row, column=col)
+        Tk.Button(self,text=closebtxt, command=self.okclose).grid(row=row, column=col)
 
     def savevals(self):
         for key, widget in self.stored_inputvars.items():
@@ -532,6 +533,7 @@ class popupwindow(Tk.Toplevel, object):
     def okclose(self):
         dataname=self.savevals()
         if self.extraclosefunc is not None:
+            # Call this function to validate data or other stuff
             self.extraclosefunc()
         self.destroy()
 
@@ -580,22 +582,59 @@ class listboxpopupwindows():
         Ndata = len(self.alldataentries)+1
         datakeyname = getdictval(self.popupwindict, 'datakeyname', None)
         entryname = repr(Ndata) if datakeyname is None else storeddata[datakeyname]
+        # TODO: Should check the name to make sure it's not a duplicate
+        # Add the entry to the data
         self.tkentry.insert(Tk.END, entryname)
         self.alldataentries[entryname] = storeddata.copy()
-        print(self.alldataentries[entryname])
+
+    def rebuildlist(self):
+        itemlist = [key for key, item in self.alldataentries.items()]
+        self.tkentry.delete(0, Tk.END)
+        for item in itemlist: self.tkentry.insert(Tk.END, item)
+
+    def checknamechange(self):
+        datakeyname = getdictval(self.popupwindict, 'datakeyname', None)
+        if datakeyname is None: return
+        namechanges=[]
+        for key, item in self.alldataentries.items():
+            if (key != item[datakeyname]): namechanges.append(key)
+        # Do the name changes
+        # in future for ordered dicts, maybe try 
+        # https://stackoverflow.com/questions/16475384/rename-a-dictionary-key
+        if len(namechanges)>0:
+            for name in namechanges:
+                newname = self.alldataentries[name][datakeyname]
+                self.alldataentries[newname] = self.alldataentries.pop(name)
+            self.rebuildlist()
 
     def new(self):
         """Create a new input window entry"""
         storeddata = OrderedDict()
         popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
-                    savebutton=False,
+                    savebutton=False, closebtxt='Save & Close',
                     extraclosefunc=partial(self.insertdata, storeddata))
         return
 
     def edit(self):
+        """Edit an entry in the list box"""
+        # Get the currently highlighted entry
+        selected   = tkextractval(moretypes.listbox, None, self.tkentry)
+        if len(selected)<1: 
+            print("No items to edit")
+            return
+        storeddata = self.alldataentries[selected[0]]
+        popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+                    extraclosefunc=self.checknamechange)
         return
 
     def remove(self):
+        selected   = tkextractval(moretypes.listbox, None, self.tkentry)
+        if len(selected)<1: 
+            print("No items to delete")
+            return
+        for selitem in selected: 
+            self.alldataentries.pop(selitem)
+        self.rebuildlist()
         return
 # -- Done listofpopupwindows --
 
@@ -867,7 +906,6 @@ class App(Tk.Tk, object):
         #print(self.getoutputdefdict('AMR-Wind'))
         #print(self.setinputfromdict('AMR-Wind', yamldict['setfromdict']))
         
-        #listboxpopupwindows(self.notebook.tab('Tab 3'),{}, {})
         self.formatgridrows()
         return
 

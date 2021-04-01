@@ -176,6 +176,7 @@ popupwindow:
   popup1:
     title:  Window title             # optional
     datakeyname:  popup1_name        # optional
+    loadonstart:  False              # optional
     inputwidgets:
     - name:       popup1_name
       label:      Name of stuff
