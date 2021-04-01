@@ -222,13 +222,13 @@ setlistboxfromdict:
     item1:
       popup1_name:   name0
       popup1_input0: 0  
-      popup1_input1: 10      
+      popup1_input1: '10'
       popup1_input2: [0, 2, 1]
     item2:
       popup1_name:   name1
       popup1_input0: 1
       popup1_input1: 20      
-      popup1_input2: [1.1, 2.001, 1]
+      popup1_input2: ['1.1', '2.001', '1']
       
 setfromdict:
   incflo.bool0: 1

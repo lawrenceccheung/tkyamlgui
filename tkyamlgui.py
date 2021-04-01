@@ -229,10 +229,10 @@ class inputwidget:
             for i in range(N):
                 self.var.append(None)
                 self.tkentry.append(Tk.Entry(master=frame, width=defaultw))
-                self.tkentry[i].insert(0, repr(defaultval[i]))
+                self.tkentry[i].insert(0, repr(defaultval[i]).strip("'").strip('"'))
         else:
             self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
-            self.tkentry.insert(0, repr(defaultval))
+            self.tkentry.insert(0, repr(defaultval).strip("'").strip('"'))
         # Add the entry to the frame
         if visible:
             if row is None: row=self.tklabel.grid_info()['row']
@@ -271,7 +271,7 @@ class inputwidget:
                 val = tkextractval(self.inputtype, self.var, self.tkentry,
                                    optionlist=self.optionlist)
         except:
-            print("Error in "+self.name)
+            print("getval(): Error in "+self.name)
             val = None
         return val
 
@@ -908,12 +908,12 @@ class App(Tk.Tk, object):
 
         # -- Set up the listbox pop-up windows --
         if 'listboxpopupwindows' in yamldict:
-            listboxpopupwindict = OrderedDict()
+            self.listboxpopupwindict = OrderedDict()
             for listboxdict in yamldict['listboxpopupwindows']:
                 frame  = self.tabframeselector(listboxdict)
                 name   = listboxdict['name']
                 popupdict = yamldict['popupwindow'][listboxdict['popupinput']]
-                listboxpopupwindict[name] = listboxpopupwindows(frame, listboxdict, popupdict)
+                self.listboxpopupwindict[name] = listboxpopupwindows(frame, listboxdict, popupdict)
 
         # -- Set up the buttons --
         if 'buttons' in yamldict:
