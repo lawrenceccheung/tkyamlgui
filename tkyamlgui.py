@@ -160,13 +160,15 @@ class inputwidget:
         self.listboxopt= listboxopt
         self.ctrlframe = ctrlframe
         self.ctrlelem  = ctrlelem
-        self.tklabel   = Tk.Label(frame, text=label)
-        self.outputdef = outputdef
         self.visible   = visible
+        self.outputdef = outputdef
         self.mergedboollist = mergedboollist
         self.button    = None
         self.allinputs = allinputs
-
+        if visible:
+            self.tklabel   = Tk.Label(frame, text=label) 
+        else:
+            self.tklabel   = None
         if inputtype == moretypes.mergedboollist: return
 
         if visible:
@@ -350,6 +352,15 @@ class inputwidget:
                 self.tkentry.config(state='disabled')                    
         return
 
+    def isactive(self):
+        if self.labelonly: return False
+        if self.inputtype==moretypes.mergedboollist: return True
+        if isinstance(self.tkentry, list): 
+            state = self.tkentry[0].cget('state')
+        else:  
+            state = self.tkentry.cget('state')
+        return (state=='normal')
+
     def choosefile(self, optiondict):
         #filewin = Tk.Toplevel()   
         #print(optiondict)
@@ -485,8 +496,9 @@ class popupwindow(Tk.Toplevel, object):
     """
     def __init__(self, parent, master, defdict, stored_inputvars, 
                  extraclosefunc=None, savebutton=True, 
-                 savebtxt='Save', closebtxt='Close', quitafterinit=False):
-        if not quitafterinit: 
+                 savebtxt='Save', closebtxt='Close', 
+                 quitafterinit=False, popupgui=True, hidden=False):
+        if popupgui:
             super(popupwindow, self).__init__(parent)
             if 'title' in defdict: self.wm_title(defdict['title'])
 
@@ -501,12 +513,15 @@ class popupwindow(Tk.Toplevel, object):
                 if getdictval(widget, 'labelonly', False) == False:
                     self.stored_inputvars[widget['name']] = widget['defaultval']
         if quitafterinit: return
+        if popupgui==False: print("Initiating no gui")
+        if hidden: self.withdraw()
 
         # populate the window
         self.temp_inputvars = OrderedDict()
         for widget in defdict['inputwidgets']:
             widgetcopy = widget.copy()
             name       = widgetcopy['name']
+            #widgetcopy['visible']    = popupgui
             if getdictval(widget, 'labelonly', False) is False: 
                 widgetcopy['defaultval'] = self.stored_inputvars[name]
             iwidget = inputwidget.fromdict(self, widgetcopy,
@@ -519,17 +534,18 @@ class popupwindow(Tk.Toplevel, object):
                 self.temp_inputvars[key].onoffctrlelem(None)
             
         # Add the save button
-        row = len(defdict['inputwidgets'])+1  #row+3
-        col=0
-        if savebutton:
-            Tk.Button(self,text=savebtxt,command=self.savevals).grid(row=row, column=0)
+        if popupgui:
+            row = len(defdict['inputwidgets'])+1  #row+3
+            col=0
+            if savebutton:
+                Tk.Button(self,text=savebtxt,command=self.savevals).grid(row=row, column=0)
             col=1
-        # Add the close button
-        Tk.Button(self,text=closebtxt, command=self.okclose).grid(row=row, column=col)
-        col_count, row_count = self.grid_size()
-        for n in range(row_count): 
-            self.grid_rowconfigure(n, minsize=25)
-
+            # Add the close button
+            Tk.Button(self,text=closebtxt, command=self.okclose).grid(row=row, column=col)
+            col_count, row_count = self.grid_size()
+            for n in range(row_count): 
+                self.grid_rowconfigure(n, minsize=25)
+        return
 
     def savevals(self):
         for key, widget in self.stored_inputvars.items():
@@ -571,7 +587,7 @@ class listboxpopupwindows():
         self.tkentry    = Tk.Listbox(self.frame, height=self.height,
                                      exportselection=False, 
                                      **self.listboxopt) 
-
+        self.listboxdict= listboxdict.copy()
         self.alldataentries = OrderedDict()
 
         # Add the objects
@@ -606,7 +622,7 @@ class listboxpopupwindows():
             # First initialize a default data set
             storeddata = OrderedDict()
             popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
-                        savebutton=False, quitafterinit=True)
+                        savebutton=False, quitafterinit=True, popupgui=False)
             # Then customize entry with stuff from item
             for key, item in itemdict.items():
                 storeddata[key] = item
@@ -650,8 +666,9 @@ class listboxpopupwindows():
             print("No items to edit")
             return
         storeddata = self.alldataentries[selected[0]]
-        popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
-                    extraclosefunc=self.checknamechange)
+        p=popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+                      extraclosefunc=self.checknamechange)
+        #for key, data in p.temp_inputvars.items(): print("edit key %s"%key)
         return
 
     def remove(self):
@@ -663,6 +680,27 @@ class listboxpopupwindows():
             self.alldataentries.pop(selitem)
         self.rebuildlist()
         return
+
+    def dumpdict(self, tag, onlyactive=True, keyfunc=None):
+        sep = ['.']
+        output = OrderedDict()
+        # Get a list of all entries
+        itemlist = [key for key, item in self.alldataentries.items()]
+        if 'outputprefix' in self.listboxdict:
+            outputpre  = getdictval(self.listboxdict['outputprefix'], tag, '')
+        if 'outputlist' in self.listboxdict:
+            outputlist = getdictval(self.listboxdict['outputlist'], tag, '')
+            key = outputpre + sep[0] + outputlist
+            output[key] = ' '.join([str(elem) for elem in itemlist])
+        for key, storeddata in self.alldataentries.items(): 
+            p=popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+                          hidden=True)
+            for key, data in p.temp_inputvars.items(): 
+                if data.isactive() and onlyactive:
+                    output[key] = data.getval()
+                    #print("dump key %s"%key+" "+repr(data.getval()))
+            p.destroy()
+        return output
 # -- Done listofpopupwindows --
 
 
@@ -1029,12 +1067,25 @@ class App(Tk.Tk, object):
         root.config(menu=menubar)
         return
 
-    def printpuwindict(self):
-        print(self.puwindict)
+    def getInputVal(self, inp):
+        if inp.labelonly is True: return None
+        val = inp.getval()
+        return val
 
-    def launchpopupwin(self, key):
-        popupwindow(self, self,  self.yamldict['popupwindow'][key], 
-                    self.popup_storteddata[key])
+    def getDictFromInputs(self, tag, onlyactive=True):
+        """
+        Create a dict based on tag in outputdefs
+        """
+        output = OrderedDict()
+        for key, var in self.inputvars.items():
+            if (not var.isactive()) and onlyactive: 
+                #print("Skipping "+key)
+                continue
+            if tag in var.outputdef:
+                outputkey = var.outputdef[tag]
+                output[outputkey] = self.getInputVal(var)
+        return output
+
     
 if __name__ == "__main__":
     App().mainloop()
