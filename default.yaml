@@ -209,6 +209,12 @@ popupwindow:
       label:      Some bool
       inputtype:  bool
       defaultval: 1
+    buttons:
+      - name: pullvals
+        text: Pull vals
+        command: "partial(self.savethenexec, 'pullvals(self.master.inputvars, self.master.statusbar)')"
+        #command: "partial(pullvals, parent.inputvars,   statuslabel=parent.statusbar)"
+      
 
 listboxpopupwindows:
   - name:       listboxpopup1

@@ -113,16 +113,6 @@ class Notebook(ttk.Notebook, object):
     def tab(self, key):
         return self._tab[key].content
 
-# def getMergedBoollist(inp, allvars):
-#     val = []
-#     for var in inp.mergedboollist:
-#         boolvar = var[0]
-#         iftrue  = var[1]
-#         iffalse = var[2]
-#         if allvars[boolvar].getval():    val.append(iftrue)
-#         else:                            val.append(iffalse)
-#     return val
-
 def tkextractval(inputtype, tkvar, tkentry, optionlist=[]):
     if inputtype is bool:
         val = bool(tkvar.get())
@@ -291,11 +281,8 @@ class inputwidget:
                           %self.name)
                 if statedisabled and forcechange:
                     itkentry.config(state='normal')                    
-                #print(repr(itkentry.get()))
                 itkentry.delete(0, Tk.END)
                 itkentry.insert(0, repr(listval[i]).strip("'").strip('"'))
-                #self.tkentry[i].insert(0, repr(listval[i]))
-                #print(repr(listval[i]), itkentry.get())
                 if statedisabled and forcechange: # Reset the state
                     itkentry.config(state='disabled')                    
         else: 
@@ -363,7 +350,6 @@ class inputwidget:
 
     def choosefile(self, optiondict):
         #filewin = Tk.Toplevel()   
-        #print(optiondict)
         selecttype = getdictval(optiondict, 'selecttype', 'open')
         if selecttype=='open':
             filename = filedialog.askopenfilename(initialdir = "./",
@@ -533,8 +519,20 @@ class popupwindow(Tk.Toplevel, object):
                 self.temp_inputvars[key].linkctrlelem(None, self.temp_inputvars)
                 self.temp_inputvars[key].onoffctrlelem(None)
             
-        # Add the save button
         if popupgui:
+        # -- Set up the buttons --
+            if 'buttons' in defdict:
+                for button in defdict['buttons']:
+                    text  = button['text']
+                    cmdstr= button['command']
+                    col   = getdictval(button, 'col', 0)
+                    b  = Tk.Button(master=self,text=text,command=eval(cmdstr))
+                    if 'row' in button:
+                        b.grid(row=button['row'], column=col,padx=5,sticky='w')
+                    else:
+                        b.grid(column=col, padx=5, sticky='w')
+
+            # Add the save button
             row = len(defdict['inputwidgets'])+1  #row+3
             col=0
             if savebutton:
@@ -569,6 +567,10 @@ class popupwindow(Tk.Toplevel, object):
             print(key+" "+repr(val))
         return
 
+    def savethenexec(self, cmdstr):
+        self.savevals()
+        eval(cmdstr)
+        return
 # -- Done popupwindow --
 
 
@@ -719,40 +721,10 @@ def pullvals(inputs, statuslabel=None):
     for key, inp in inputs.items():
         if inp.labelonly is False:
             val = inp.getval()
-            # if inp.inputtype is moretypes.mergedboollist:
-            #     val = getMergedBoollist(inp, inputs)
-            # else:
-            #     val = inp.getval()
             print(inp.name+' '+repr(val))
     if statuslabel is not None: statuslabel.config(text='Pulled values')
     print("--- pulled values ---")
     return
-
-# def dummyMenu(root):
-#     """ 
-#     Adds a menu bar to root
-#     See https://www.tutorialspoint.com/python/tk_menu.htm
-#     """
-#     menubar  = Tk.Menu(root)
-
-#     # File menu
-#     filemenu = Tk.Menu(menubar, tearoff=0)
-#     filemenu.add_command(label="New", command=partial(donothing, root))
-#     filemenu.add_command(label="Open", command=partial(donothing, root))
-#     filemenu.add_command(label="Save", command=partial(donothing, root))
-#     filemenu.add_command(label="Save as...", command=partial(donothing, root))
-#     filemenu.add_command(label="Close", command=partial(donothing, root))
-#     filemenu.add_separator()
-#     filemenu.add_command(label="Exit", command=root.quit)
-#     menubar.add_cascade(label="File", menu=filemenu)
-
-#     # Help menu
-#     helpmenu = Tk.Menu(menubar, tearoff=0)
-#     helpmenu.add_command(label="Help Index", command=partial(donothing, root))
-#     helpmenu.add_command(label="About...", command=partial(donothing, root))
-#     menubar.add_cascade(label="Help", menu=helpmenu)
-
-#     root.config(menu=menubar)
 
 
 # Run all of the gui elements
@@ -1089,9 +1061,9 @@ class App(Tk.Tk, object):
                 output[outputkey] = self.getInputVal(var)
         return output
 
-    def launchpopupwin(self, key):
+    def launchpopupwin(self, key, **kwargs):
         popupwindow(self, self,  self.yamldict['popupwindow'][key], 
-                    self.popup_storteddata[key])
+                    self.popup_storteddata[key], **kwargs)
         
 if __name__ == "__main__":
     App().mainloop()
