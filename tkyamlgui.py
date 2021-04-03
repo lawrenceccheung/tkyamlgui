@@ -346,7 +346,11 @@ class inputwidget:
             state = self.tkentry[0].cget('state')
         else:  
             state = self.tkentry.cget('state')
-        return (state=='normal')
+        isnormalstate = (state=='normal')
+        hasdata       = False
+        if isnormalstate: 
+            hasdata = (str(self.getval())!='')
+        return (isnormalstate and hasdata)
 
     def choosefile(self, optiondict):
         #filewin = Tk.Toplevel()   
@@ -682,12 +686,16 @@ class listboxpopupwindows():
             self.alldataentries.pop(selitem)
         self.rebuildlist()
         return
+    
+    def getitemlist(self):
+        return [key for key, item in self.alldataentries.items()]
 
-    def dumpdict(self, tag, onlyactive=True, keyfunc=None):
+    def dumpdict(self, tag, subset=[], onlyactive=True, keyfunc=None):
         sep = '.'
         output = OrderedDict()
         # Get a list of all entries
-        itemlist = [key for key, item in self.alldataentries.items()]
+        #itemlist = [key for key, item in self.alldataentries.items()]
+        itemlist = self.getitemlist()
         if len(itemlist)<1: return output
         if 'outputprefix' in self.listboxdict:
             outputpre  = getdictval(self.listboxdict['outputprefix'], tag, '')
@@ -695,7 +703,12 @@ class listboxpopupwindows():
             outputlist = getdictval(self.listboxdict['outputlist'], tag, '')
             key = outputpre + sep + outputlist
             output[key] = ' '.join([str(elem) for elem in itemlist])
-        for key, storeddata in self.alldataentries.items(): 
+        if len(subset)>0: 
+            loopsubset = {key:self.alldataentries[key] for key in subset}
+        else: 
+            loopsubset = self.alldataentries
+        #for key, storeddata in self.alldataentries.items(): 
+        for key, storeddata in loopsubset.items(): 
             p=popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
                           hidden=True)
             for k, data in p.temp_inputvars.items(): 
@@ -704,7 +717,7 @@ class listboxpopupwindows():
                         if keyfunc is None:
                             storekey = key+'.'+data.outputdef[tag]
                         else:
-                            storekey = keyfunc(key, self.listboxdict, data.outputdef)
+                            storekey = keyfunc(key, self.listboxdict, data)
                         output[storekey] = data.getval()
                     #print("dump key %s"%key+" "+repr(data.getval()))
             p.destroy()
