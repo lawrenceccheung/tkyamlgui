@@ -838,10 +838,10 @@ class App(Tk.Tk, object):
     Creates a Tk app which loads the configuration from a yaml file
     """
     def __init__(self, menufunc=None, configyaml='default.yaml', 
-                 title='TK Yaml GUI', leftframew=525,
+                 title='TK Yaml GUI', leftframew=525, withdraw=False,
                  *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
-
+        if withdraw: self.withdraw()
         self.leftframew = leftframew
         self.wm_title(title)
         self.geometry("1050x575")
