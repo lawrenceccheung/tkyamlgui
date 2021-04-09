@@ -134,7 +134,8 @@ class inputwidget:
     """
     Creates a general-purpose widget for input 
     """
-    def __init__(self, frame, row, inputtype, name, label, 
+    def __init__(self, frame, row, inputtype, name, label,
+                 parent=None,
                  defaultval=None, optionlist=[], 
                  listboxopt={},  fileopenopt={},
                  ctrlframe=None, ctrlelem=None,
@@ -143,6 +144,7 @@ class inputwidget:
         defaultw       = 12
         self.name      = name
         self.label     = label
+        self.parent    = parent
         self.labelonly = labelonly
         self.inputtype = inputtype
         self.var       = None
@@ -180,11 +182,12 @@ class inputwidget:
                 self.tkentry   = Tk.Checkbutton(frame, variable=self.var, 
                                                 command=partial(self.onoffctrlelem, None))
         elif (inputtype is moretypes.listbox):
-            height=max(3,len(optionlist))
+            allopts = eval(optionlist) if isinstance(optionlist,str) else optionlist
+            height=max(3,len(allopts))
             self.tkentry   = Tk.Listbox(frame, height=height,
                                         exportselection=False, **listboxopt) 
 
-            for i, option in enumerate(optionlist):
+            for i, option in enumerate(allopts):
                 self.tkentry.insert(i+1, option)
             # Set the default values
             if defaultval is not None:
@@ -447,9 +450,9 @@ class inputwidget:
         return
     
     @classmethod
-    def fromdict(cls, frame, d, allframes=None, allinputs=None): 
+    def fromdict(cls, frame, d, parent=None, allframes=None, allinputs=None): 
         # Parse the dict
-        name                        = d['name']
+        name       = d['name']
         row        = getdictval(d, 'row',        None)
         label      = getdictval(d, 'label',      '')
         defaultval = getdictval(d, 'defaultval', None)
@@ -471,7 +474,7 @@ class inputwidget:
         listboxopt = getdictval(d, 'listboxopt', {})
         fileopenopt= getdictval(d, 'fileopenopt', {})
         # Return the widget
-        return cls(frame, row, inputtype, name, label,
+        return cls(frame, row, inputtype, name, label, parent=parent,
                    defaultval=defaultval, optionlist=optionlist,
                    listboxopt=listboxopt, fileopenopt=fileopenopt,
                    ctrlframe=ctrlframe,   ctrlelem=ctrlelem,
@@ -514,7 +517,7 @@ class popupwindow(Tk.Toplevel, object):
             #widgetcopy['visible']    = popupgui
             if getdictval(widget, 'labelonly', False) is False: 
                 widgetcopy['defaultval'] = self.stored_inputvars[name]
-            iwidget = inputwidget.fromdict(self, widgetcopy,
+            iwidget = inputwidget.fromdict(self, widgetcopy, parent=parent,
                                            allinputs=self.temp_inputvars)
             self.temp_inputvars[name] = iwidget
         # link any widgets necessary
@@ -915,7 +918,7 @@ class App(Tk.Tk, object):
         for widget in yamldict['inputwidgets']:
             name  = widget['name']
             frame = self.tabframeselector(widget)
-            iwidget = inputwidget.fromdict(frame, widget,
+            iwidget = inputwidget.fromdict(frame, widget, parent=self,
                                            allframes=self.subframes,
                                            allinputs=self.inputvars)
             self.inputvars[name] = iwidget
@@ -931,6 +934,7 @@ class App(Tk.Tk, object):
             for key, win in yamldict['popupwindow'].items():
                 if win['loadonstart'] == True:
                     self.popup_storteddata[key] = OrderedDict()
+                    if withdraw: self.launchpopupwin(key, hidden=True)
         
         # -- Set up the listbox pop-up windows --
         if 'listboxpopupwindows' in yamldict:
