@@ -184,7 +184,8 @@ class inputwidget:
         elif (inputtype is moretypes.listbox):
             allopts = eval(optionlist) if isinstance(optionlist,str) else optionlist
             height=max(3,len(allopts))
-            self.tkentry   = Tk.Listbox(frame, height=height,
+            if 'height' not in listboxopt: listboxopt['height'] = height
+            self.tkentry   = Tk.Listbox(frame, #height=height,
                                         exportselection=False, **listboxopt) 
 
             for i, option in enumerate(allopts):
