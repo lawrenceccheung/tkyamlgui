@@ -116,6 +116,7 @@ inputwidgets:
     defaultval: optionC
     listboxopt: 
       selectmode: multiple
+      height:   4
     ctrlelem:
       - frame: frame1
         activewhen: ['frame1', 1]

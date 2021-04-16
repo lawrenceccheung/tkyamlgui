@@ -185,11 +185,17 @@ class inputwidget:
             allopts = eval(optionlist) if isinstance(optionlist,str) else optionlist
             height=max(3,len(allopts))
             if 'height' not in listboxopt: listboxopt['height'] = height
+            self.yscroll   = Tk.Scrollbar(frame, orient=Tk.VERTICAL)
+            if visible and (row is None): row=self.tklabel.grid_info()['row']
+            self.yscroll.grid(row=row, column=2, sticky=Tk.NW+Tk.S)
             self.tkentry   = Tk.Listbox(frame, #height=height,
-                                        exportselection=False, **listboxopt) 
+                                        exportselection=False,
+                                        yscrollcommand=self.yscroll.set, 
+                                        **listboxopt) 
 
             for i, option in enumerate(allopts):
                 self.tkentry.insert(i+1, option)
+            self.yscroll['command'] = self.tkentry.yview
             # Set the default values
             if defaultval is not None:
                 if not isinstance(defaultval, list): defaultval = [defaultval]
