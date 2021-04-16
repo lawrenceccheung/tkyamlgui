@@ -195,7 +195,8 @@ class inputwidget:
                 if not isinstance(defaultval, list): defaultval = [defaultval]
                 for v in defaultval:
                     # set the value to active
-                    self.tkentry.selection_set(self.optionlist.index(v))
+                    if v in self.optionlist:
+                        self.tkentry.selection_set(self.optionlist.index(v))
             if self.ctrlelem is not None:
                 self.tkentry.bind("<<ListboxSelect>>", self.onoffctrlelem)
         elif (inputtype is str) and (len(optionlist)>0):
