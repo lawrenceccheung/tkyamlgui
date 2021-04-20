@@ -430,14 +430,19 @@ class inputwidget:
                 if elem['ctrlframe'] is not None:
                     #print("Set "+elem['frame']+" to "+framestate)
                     for child in elem['ctrlframe'].winfo_children():
-                        child.configure(state=framestate)
+                        try:    child.configure(state=framestate)
+                        except: None
                 if elem['ctrlinput'] is not None:
                     #print("Set "+elem['input']+" to "+inputstate)
                     if isinstance(elem['ctrlinput'].tkentry, list):
                         for entry in elem['ctrlinput'].tkentry:
-                            entry.config(state=inputstate)
+                            try:    
+                                entry.config(state=inputstate)
+                            except: 
+                                None
                     else:
-                        elem['ctrlinput'].tkentry.config(state=inputstate)
+                        try: elem['ctrlinput'].tkentry.config(state=inputstate)
+                        except: None
         return
 
     def linkctrlelem(self, allframes, allinputs):
@@ -601,15 +606,20 @@ class listboxpopupwindows():
         self.listboxopt = getdictval(listboxdict, 'listboxopt', {})
         self.label      = getdictval(listboxdict, 'label', 'Label')
         self.tklabel    = Tk.Label(frame, text=self.label)
+        self.yscroll    = Tk.Scrollbar(frame, orient=Tk.VERTICAL)
         self.tkentry    = Tk.Listbox(self.frame, height=self.height,
-                                     exportselection=False, 
+                                     exportselection=False,
+                                     yscrollcommand=self.yscroll.set,  
                                      **self.listboxopt) 
         self.listboxdict= listboxdict.copy()
         self.alldataentries = OrderedDict()
 
+        self.yscroll['command'] = self.tkentry.yview
+
         # Add the objects
         if self.row is None:  row, col = frame.grid_size()
         else:                 row = self.row
+        self.yscroll.grid(row=row, column=2, sticky=Tk.NW+Tk.S)
         self.tklabel.grid(row=row, column=0, sticky='nw', padx=5)
         self.tkentry.grid(row=row, column=1, sticky='w')
         
