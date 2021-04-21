@@ -46,6 +46,8 @@ if useruemel: yaml = yaml.YAML()
 # Helpful function for pulling things out of dicts
 getdictval = lambda d, key, default: default if key not in d else d[key]
 
+verbose = False
+
 # Add some additional input types
 class moretypes(Enum):
     mergedboollist = 1    
@@ -232,7 +234,8 @@ class inputwidget:
             for i in range(N):
                 self.var.append(None)
                 self.tkentry.append(Tk.Entry(master=frame, width=defaultw))
-                self.tkentry[i].insert(0, repr(defaultval[i]).strip("'").strip('"'))
+                if defaultval is not None:
+                    self.tkentry[i].insert(0, repr(defaultval[i]).strip("'").strip('"'))
         else:
             self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
             self.tkentry.insert(0, repr(defaultval).strip("'").strip('"'))
@@ -274,7 +277,7 @@ class inputwidget:
                 val = tkextractval(self.inputtype, self.var, self.tkentry,
                                    optionlist=self.optionlist)
         except:
-            print("getval(): Error in "+self.name)
+            if verbose: print("getval(): Error in "+self.name)
             val = None
         return val
 
@@ -945,14 +948,6 @@ class App(Tk.Tk, object):
             if self.inputvars[key].ctrlelem is not None:
                 self.inputvars[key].linkctrlelem(self.subframes, self.inputvars)
                 self.inputvars[key].onoffctrlelem(None)
-
-        # -- Initialize the startup pop-up windows --
-        self.popup_storteddata = OrderedDict()
-        if 'popupwindow' in yamldict:
-            for key, win in yamldict['popupwindow'].items():
-                if win['loadonstart'] == True:
-                    self.popup_storteddata[key] = OrderedDict()
-                    if withdraw: self.launchpopupwin(key, hidden=True)
         
         # -- Set up the listbox pop-up windows --
         if 'listboxpopupwindows' in yamldict:
@@ -962,6 +957,14 @@ class App(Tk.Tk, object):
                 name   = listboxdict['name']
                 popupdict = yamldict['popupwindow'][listboxdict['popupinput']]
                 self.listboxpopupwindict[name] = listboxpopupwindows(frame, listboxdict, popupdict)
+
+        # -- Initialize the startup pop-up windows --
+        self.popup_storteddata = OrderedDict()
+        if 'popupwindow' in yamldict:
+            for key, win in yamldict['popupwindow'].items():
+                if win['loadonstart'] == True:
+                    self.popup_storteddata[key] = OrderedDict()
+                    if withdraw: self.launchpopupwin(key, hidden=True)
 
         # -- Set up the buttons --
         if 'buttons' in yamldict:
