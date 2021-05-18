@@ -508,7 +508,7 @@ class popupwindow(Tk.Toplevel, object):
     """
     def __init__(self, parent, master, defdict, stored_inputvars, 
                  extraclosefunc=None, savebutton=True, 
-                 savebtxt='Save', closebtxt='Close', 
+                 savebtxt='Save', closebtxt='Close', entrynum=None,
                  quitafterinit=False, popupgui=True, hidden=False):
         if popupgui:
             super(popupwindow, self).__init__(parent)
@@ -544,7 +544,12 @@ class popupwindow(Tk.Toplevel, object):
             if self.temp_inputvars[key].ctrlelem is not None:
                 self.temp_inputvars[key].linkctrlelem(None, self.temp_inputvars)
                 self.temp_inputvars[key].onoffctrlelem(None)
-            
+
+        # Append an entry number to name (if necessary)
+        if entrynum is not None:
+            name=self.temp_inputvars[self.datakeyname].getval()
+            self.temp_inputvars[self.datakeyname].setval(name+repr(entrynum))
+        
         if popupgui:
         # -- Set up the buttons --
             if 'buttons' in defdict:
@@ -688,6 +693,7 @@ class listboxpopupwindows():
         storeddata = OrderedDict()
         popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
                     savebutton=False, closebtxt='Save & Close',
+                    entrynum=len(self.alldataentries),
                     extraclosefunc=partial(self.insertdata, storeddata))
         return
 
