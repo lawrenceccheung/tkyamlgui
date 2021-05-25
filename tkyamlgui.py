@@ -323,7 +323,8 @@ class inputwidget:
                 if strinput: listval = re.split(r'[,; ]+', val)
                 for v in listval:
                     # set the value to active
-                    self.tkentry.selection_set(self.optionlist.index(v))
+                    allopts = eval(self.optionlist) if isinstance(self.optionlist,str) else self.optionlist
+                    self.tkentry.selection_set(allopts.index(v))
             elif self.inputtype==moretypes.mergedboollist:
                 allboolstrs=[item for sublist in self.mergedboollist for item in sublist[1:]]
                 listval=val
