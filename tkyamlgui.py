@@ -758,7 +758,25 @@ class listboxpopupwindows():
         return output
 # -- Done listofpopupwindows --
 
+class messagewindow():
+    def __init__(self, toproot, mesg, autowidth=True):
+        width=len(max(mesg.split("\n"), key = len)) if autowidth else 40
+        self.mesgwin     = Tk.Toplevel(toproot)
+        self.text_widget = Tk.Text(self.mesgwin, height=5, width=width)
+        self.scroll_bar  = Tk.Scrollbar(self.mesgwin,
+                                        command=self.text_widget.yview,
+                                        orient="vertical")
+        self.scroll_bar.grid(row=0, column=1, sticky="ns")
+        self.text_widget.grid(row=0, column=0)
+        self.text_widget.configure(yscrollcommand=self.scroll_bar.set)
+        #self.text_widget.insert(Tk.END, long_text)
+        self.text_widget.insert(Tk.END, mesg)
+        self.button = Tk.Button(self.mesgwin, command=self.quit, text="Close")
+        self.button.grid(row=1)
 
+    def quit(self):
+        self.mesgwin.destroy()
+        
 def donothing(toproot):
     filewin = Tk.Toplevel(toproot)
     button = Tk.Button(filewin, text="Do nothing button")
