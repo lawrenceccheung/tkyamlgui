@@ -759,10 +759,10 @@ class listboxpopupwindows():
 # -- Done listofpopupwindows --
 
 class messagewindow():
-    def __init__(self, toproot, mesg, autowidth=True):
+    def __init__(self, toproot, mesg, autowidth=True, height=5):
         width=len(max(mesg.split("\n"), key = len)) if autowidth else 40
         self.mesgwin     = Tk.Toplevel(toproot)
-        self.text_widget = Tk.Text(self.mesgwin, height=5, width=width)
+        self.text_widget = Tk.Text(self.mesgwin, height=height, width=width)
         self.scroll_bar  = Tk.Scrollbar(self.mesgwin,
                                         command=self.text_widget.yview,
                                         orient="vertical")
@@ -1126,6 +1126,20 @@ class App(Tk.Tk, object):
                 outputkey = var.outputdef[tag]
                 output[outputkey] = self.getInputVal(var)
         return output
+
+    def getHelpFromInputs(self, outputtag, helptag, onlyactive=True):
+        """
+        Extract the help fields from inputs
+        """
+        output = OrderedDict()
+        for key, var in self.inputvars.items():
+            if (not var.isactive()) and onlyactive: 
+                continue
+            if helptag in var.outputdef:
+                outputkey = var.outputdef[outputtag]
+                output[outputkey] = var.outputdef[helptag]
+        return output
+        
 
     def launchpopupwin(self, key, **kwargs):
         popupwindow(self, self,  self.yamldict['popupwindow'][key], 
