@@ -37,11 +37,15 @@ try:
     import ruamel.yaml as yaml
     #print("# Loaded ruamel.yaml")
     useruemel=True
+    try:
+        yaml = yaml.YAML()
+    except:
+        pass
 except:
     import yaml as yaml
     #print("# Loaded yaml")
     useruemel=False
-if useruemel: yaml = yaml.YAML()
+#if useruemel: yaml = yaml.YAML()
 
 # Helpful function for pulling things out of dicts
 getdictval = lambda d, key, default: default if key not in d else d[key]
