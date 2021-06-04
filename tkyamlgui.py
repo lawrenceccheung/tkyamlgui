@@ -370,15 +370,21 @@ class inputwidget:
     def choosefile(self, optiondict):
         #filewin = Tk.Toplevel()   
         selecttype = getdictval(optiondict, 'selecttype', 'open')
+        kwargs     = getdictval(optiondict, 'kwargs', {})
+        if 'filetypes' in kwargs:
+            kwargs['filetypes'] = [(g[0], g[1]) for g in kwargs['filetypes']]
         if selecttype=='open':
             filename = filedialog.askopenfilename(initialdir = "./",
-                                                  title = "Select file")
+                                                  title = "Select file", 
+                                                  **kwargs)
         elif selecttype=='saveas':
             filename = filedialog.asksaveasfilename(initialdir = "./",
-                                                    title = "Select file")
+                                                    title = "Select file",
+                                                    **kwargs)
         elif selecttype=='directory':
             filename = filedialog.askdirectory(initialdir = "./",
-                                               title = "Select directory")
+                                               title = "Select directory",
+                                               **kwargs)
         self.tkentry.delete(0, Tk.END)
         self.tkentry.insert(0, filename)
         return filename
