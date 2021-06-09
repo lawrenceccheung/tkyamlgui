@@ -981,11 +981,6 @@ class App(Tk.Tk, object):
                                            allframes=self.subframes,
                                            allinputs=self.inputvars)
             self.inputvars[name] = iwidget
-        # link any widgets necessary
-        for key,  inputvar in self.inputvars.items():
-            if self.inputvars[key].ctrlelem is not None:
-                self.inputvars[key].linkctrlelem(self.subframes, self.inputvars)
-                self.inputvars[key].onoffctrlelem(None)
         
         # -- Set up the listbox pop-up windows --
         if 'listboxpopupwindows' in yamldict:
@@ -1017,6 +1012,12 @@ class App(Tk.Tk, object):
                     b.grid(row=button['row'], column=col, padx=5, sticky='w')
                 else:
                     b.grid(column=col, padx=5, sticky='w')
+
+        # link any widgets necessary
+        for key,  inputvar in self.inputvars.items():
+            if self.inputvars[key].ctrlelem is not None:
+                self.inputvars[key].linkctrlelem(self.subframes, self.inputvars)
+                self.inputvars[key].onoffctrlelem(None)
         
         # -- Button demonstrating pullvals --
         # button = Tk.Button(master=self.notebook.tab('Tab 1'),text="Pullvals", 
