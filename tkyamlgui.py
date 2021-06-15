@@ -214,7 +214,9 @@ class inputwidget:
         elif (inputtype is str) and (len(optionlist)>0):
             # create a dropdown menu
             self.var       = Tk.StringVar()
-            self.tkentry   = Tk.OptionMenu(frame, self.var, *optionlist)
+            optlist = eval(optionlist) if isinstance(optionlist,str) else optionlist
+            if len(optlist)==0: optlist=['']
+            self.tkentry   = Tk.OptionMenu(frame, self.var, *optlist)
             if defaultval is not None: self.var.set(defaultval)
         elif (inputtype is str):
             self.var       = Tk.StringVar()
@@ -620,7 +622,8 @@ class listboxpopupwindows():
     """
     Creates a widget for editing a list of pop-up windows
     """
-    def __init__(self, frame, listboxdict, popupwindict):
+    def __init__(self, parent, frame, listboxdict, popupwindict):
+        self.parent     = parent
         self.frame      = frame
         self.popupwindict=popupwindict.copy()
         self.height     = getdictval(listboxdict, 'height', 4)
@@ -670,7 +673,8 @@ class listboxpopupwindows():
             #print(itemkey)
             # First initialize a default data set
             storeddata = OrderedDict()
-            popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+            #popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+            popupwindow(self.parent, self.frame, self.popupwindict, storeddata,
                         savebutton=False, quitafterinit=True, popupgui=False)
             # Then customize entry with stuff from item
             for key, item in itemdict.items():
@@ -702,7 +706,8 @@ class listboxpopupwindows():
     def new(self):
         """Create a new input window entry"""
         storeddata = OrderedDict()
-        popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+        #popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+        popupwindow(self.parent, self.frame, self.popupwindict, storeddata,
                     savebutton=False, closebtxt='Save & Close',
                     entrynum=len(self.alldataentries),
                     extraclosefunc=partial(self.insertdata, storeddata))
@@ -716,7 +721,8 @@ class listboxpopupwindows():
             print("No items to edit")
             return
         storeddata = self.alldataentries[selected[0]]
-        p=popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+        #p=popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+        p=popupwindow(self.parent, self.frame, self.popupwindict, storeddata,
                       extraclosefunc=self.checknamechange)
         #for key, data in p.temp_inputvars.items(): print("edit key %s"%key)
         return
@@ -753,7 +759,8 @@ class listboxpopupwindows():
             loopsubset = self.alldataentries
         #for key, storeddata in self.alldataentries.items(): 
         for key, storeddata in loopsubset.items(): 
-            p=popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
+            #p=popupwindow(self.frame, self.frame, self.popupwindict,storeddata,
+            p=popupwindow(self.parent, self.frame, self.popupwindict,storeddata,
                           hidden=True)
             for k, data in p.temp_inputvars.items(): 
                 if data.isactive() and onlyactive:
@@ -989,7 +996,7 @@ class App(Tk.Tk, object):
                 frame  = self.tabframeselector(listboxdict)
                 name   = listboxdict['name']
                 popupdict = yamldict['popupwindow'][listboxdict['popupinput']]
-                self.listboxpopupwindict[name] = listboxpopupwindows(frame, listboxdict, popupdict)
+                self.listboxpopupwindict[name] = listboxpopupwindows(self, frame, listboxdict, popupdict)
 
         # -- Initialize the startup pop-up windows --
         self.popup_storteddata = OrderedDict()
