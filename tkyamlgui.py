@@ -84,13 +84,13 @@ def to_bool(bool_str):
 #
 # See https://stackoverflow.com/questions/58045626/scrollbar-in-tkinter-notebook-frames
 class YScrolledFrame(Tk.Frame, object):
-    def __init__(self, parent, canvaswidth=500, *args, **kwargs):
+    def __init__(self, parent, canvaswidth=500,canvasheight=500,*args,**kwargs):
         super(YScrolledFrame, self).__init__(parent, *args, **kwargs)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
         self.canvas = canvas = Tk.Canvas(self, relief='raised', 
-                                         width=canvaswidth, height=450)
+                                         width=canvaswidth, height=canvasheight)
         canvas.grid(row=0, column=0, sticky='nsew')
 
         scroll = Tk.Scrollbar(self, command=canvas.yview, orient=Tk.VERTICAL)
