@@ -526,7 +526,7 @@ class popupwindow(Tk.Toplevel, object):
         if popupgui:
             super(popupwindow, self).__init__(parent)
             if 'title' in defdict: self.wm_title(defdict['title'])
-
+        self.parent = parent
         self.master = master
         self.extraclosefunc = extraclosefunc
         self.datakeyname    = getdictval(defdict, 'datakeyname', None)
@@ -656,16 +656,25 @@ class listboxpopupwindows():
         editb.grid(row=row+1, column=1)
         delb.grid(row=row+1,  column=2)
 
-    def insertdata(self, storeddata):
+    def insertdata(self, storeddata, forcechange=False):
         Ndata = len(self.alldataentries)+1
         datakeyname = getdictval(self.popupwindict, 'datakeyname', None)
         entryname = repr(Ndata) if datakeyname is None else storeddata[datakeyname]
-        # TODO: Should check the name to make sure it's not a duplicate
+        # Check initial state
+        prevstate = self.tkentry.cget('state')
+        statedisabled=self.tkentry.cget('state') in ['disable','disabled']
+        if statedisabled and forcechange: self.tkentry.config(state='normal') 
+
         # Add the entry to the data
+        # TODO: Should check the name to make sure it's not a duplicate
         self.tkentry.insert(Tk.END, entryname)
         self.alldataentries[entryname] = storeddata.copy()
 
-    def populatefromdict(self, fromdict, deleteprevious=True):
+        # Reset state if necessary
+        if statedisabled and forcechange: self.tkentry.config(state=prevstate) 
+
+    def populatefromdict(self, fromdict, deleteprevious=True, 
+                         verbose=False, forcechange=False):
         if deleteprevious: 
             self.tkentry.delete(0, Tk.END)
             self.alldataentries.clear()
@@ -678,8 +687,10 @@ class listboxpopupwindows():
                         savebutton=False, quitafterinit=True, popupgui=False)
             # Then customize entry with stuff from item
             for key, item in itemdict.items():
+                if verbose: print('%s: %s'%(key, repr(item)))
                 storeddata[key] = item
-            self.insertdata(storeddata)
+            if verbose: print(storeddata)
+            self.insertdata(storeddata, forcechange=forcechange)
         self.rebuildlist()
         return
 
