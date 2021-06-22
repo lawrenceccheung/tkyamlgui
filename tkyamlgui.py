@@ -27,11 +27,13 @@ if sys.version_info[0] < 3:
     import ttk
     import tkFileDialog as filedialog
     from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
+    import collections as collectionsabc
 else:
     import tkinter as Tk
     from tkinter import ttk
     from tkinter import filedialog as filedialog
     from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk as NavigationToolbar2TkAgg
+    import collections.abc as collectionsabc
 
 try:
     import ruamel.yaml as yaml
