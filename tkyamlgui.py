@@ -820,7 +820,56 @@ def pullvals(inputs, statuslabel=None):
     return
 
 
+def listindexwithkey(dictlist, keyval, searchkey='name'):
+    """
+    Finds the index of item with searchkey=keyval in list dictlist
+    """
+    for i, item in enumerate(dictlist):
+        if item[searchkey]==keyval: return i
+    return None
+
+def update(d, u, searchkey='name'):
+    """
+    Updates a dict
+    """
+    # See https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+
+    # Empty dict, just return
+    if u is None: 
+        return d
+
+    # Loop through items
+    for k, v in u.items():
+        if isinstance(v, list):
+            # Update this a list item
+            if k not in d:
+                # New list, add it
+                d[k] = v
+            else:
+                # Update the list items
+                for vi in v:
+                    if searchkey in vi:
+                        # list of dicts
+                        idx = listindexwithkey(d[k], vi[searchkey], \
+                                               searchkey=searchkey)
+                        if idx is not None:
+                            d[k][idx] = update(d[k][idx], vi)
+                        else:
+                            d[k].append(vi)
+                    else:
+                        # Handle it as a simple list
+                        if vi not in d[k]: d[k].append(vi)
+            pass
+        elif isinstance(v, collectionsabc.Mapping):
+            # -- Update the dictionary --
+            d[k] = update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
+
+
 # Run all of the gui elements
+# ------- OBSOLETE: DELETE THIS ---------------
 def doGUI():
 
     # GUI stuff
@@ -918,6 +967,7 @@ class App(Tk.Tk, object):
     Creates a Tk app which loads the configuration from a yaml file
     """
     def __init__(self, menufunc=None, configyaml='default.yaml', 
+                 localconfigdir='',
                  title='TK Yaml GUI', leftframew=525, withdraw=False,
                  *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
@@ -962,6 +1012,18 @@ class App(Tk.Tk, object):
             if useruemel: Loader=yaml.load
             else:         Loader=yaml.safe_load
             yamldict = Loader(fp)
+
+        # Load any additional local yaml configuration 
+        if os.path.exists(localconfigdir):
+            for fname in os.listdir(localconfigdir):
+                # Load only "real modules"
+                if not fname.startswith('.') and \
+                   not fname.startswith('__') and fname.endswith('.yaml'):
+                    loadfile = os.path.join(localconfigdir, fname)
+                    updatedict = Loader(open(loadfile))
+                    #print("Updating with "+loadfile)
+                    yamldict = update(yamldict, updatedict)
+        # save yamldict
         self.yamldict=yamldict
 
         # -- Set up the tabs --
