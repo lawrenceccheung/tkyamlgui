@@ -675,6 +675,17 @@ class listboxpopupwindows():
         # Reset state if necessary
         if statedisabled and forcechange: self.tkentry.config(state=prevstate) 
 
+    def getdefaultdict(self):
+        """Returns the default dictionary which can be edited and used to
+        populate additional entries.
+        """
+        defaultdict = OrderedDict()
+        for item in self.popupwindict['inputwidgets']:
+            if ('labelonly' in item) and  (item['labelonly'] is True):
+                continue
+            defaultdict[item['name']] = item['defaultval']
+        return defaultdict
+
     def populatefromdict(self, fromdict, deleteprevious=True, 
                          verbose=False, forcechange=False):
         if deleteprevious: 
