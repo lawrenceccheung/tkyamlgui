@@ -34,6 +34,7 @@ inputwidgets:
         activewhen: ['', 0]
     outputdef:
       AMR-Wind: incflo.bool0
+      help:     This is input_0
       
   - name: input_1
     label: input_1 description
@@ -43,6 +44,9 @@ inputwidgets:
     visible: True
     outputdef:
       AMR-Wind: incflo.int1
+      help:     |
+        This is input_1
+        same as incflo.int1
 
   - name: input_2
     label: "list input  "
@@ -151,6 +155,7 @@ buttons:
     text: Update Plot
     tab:  Tab 1
     command: self.updateplot
+    help: Press to update plot
 
   - name: button
     text: Exit
