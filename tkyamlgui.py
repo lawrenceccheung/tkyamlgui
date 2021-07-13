@@ -702,7 +702,7 @@ class listboxpopupwindows():
             for key, item in itemdict.items():
                 if verbose: print('%s: %s'%(key, repr(item)))
                 storeddata[key] = item
-            if verbose: print(storeddata)
+            #if verbose: print(storeddata)
             self.insertdata(storeddata, forcechange=forcechange)
         self.rebuildlist()
         return
