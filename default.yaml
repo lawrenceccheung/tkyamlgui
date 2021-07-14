@@ -10,6 +10,7 @@ frames:
     tab:  Tab 4
     row:  1
     title: This is frame 1
+    toggled: True
   - name: frame2
     tab:  Tab 4
     row:  0
@@ -21,6 +22,8 @@ frames:
     tab:  Tab 1
     row:  1
     title: this is frameA in Tab 5
+    toggled: True
+
 
 inputwidgets:
   - name:       input_0

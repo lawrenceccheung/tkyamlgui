@@ -83,6 +83,50 @@ def to_bool(bool_str):
     #if here we couldn't parse it
     raise ValueError("[%s] is not recognized as a boolean value" % bool_str)
 
+class ToggledFrame(Tk.Frame):
+    """
+    Create a toggled/expandable frame
+    """
+    # See https://stackoverflow.com/questions/13141259/expandable-and-contracting-frame-in-tkinter
+    def __init__(self, parent, text="", initstate=1, *args, **options):
+        Tk.Frame.__init__(self, parent, *args, **options)
+
+        self.show = Tk.IntVar()
+        self.show.set(initstate)
+
+        self.title_frame = ttk.LabelFrame(parent) #ttk.Frame(self)
+
+        self.header_frame = Tk.Frame(self.title_frame)
+        self.header_frame.grid(row=0, column=0, sticky='w')
+        defaultwidth=20
+        w=max(len(text)+2, defaultwidth)
+        ttk.Label(self.header_frame, text=" "+text, width=w).grid(row=0, column=1,
+                                                              sticky='w')
+
+        self.toggle_button = ttk.Checkbutton(self.header_frame, #width=8, 
+                                             text='[show]', 
+                                             command=self.toggle,
+                                             variable=self.show, 
+                                             style='Toolbutton')
+        self.toggle_button.grid(row=0, column=0)
+
+        self.sub_frame = Tk.Frame(self.title_frame, #relief="sunken",
+                                  borderwidth=1)
+        self.toggle()
+
+    def toggle(self):
+        if bool(self.show.get()):
+            self.sub_frame.grid(row=1)
+            self.toggle_button.configure(text='[hide]')
+        else:
+            self.sub_frame.grid_forget()
+            self.toggle_button.configure(text='[show]')
+
+    def setstate(self, state):
+        self.show.set(state)
+        self.toggle()
+
+
 #
 # See https://stackoverflow.com/questions/58045626/scrollbar-in-tkinter-notebook-frames
 class YScrolledFrame(Tk.Frame, object):
@@ -103,10 +147,14 @@ class YScrolledFrame(Tk.Frame, object):
         self.canvas.create_window(0, 0, window=self.content, anchor="nw")
 
         self.bind('<Configure>', self.on_configure)
+        self.content.bind('<Configure>', self.reset_scrollregion)
 
     def on_configure(self, event):
         bbox = self.content.bbox('ALL')
         self.canvas.config(scrollregion=bbox)
+
+    def reset_scrollregion(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox('all'))
 
 class Notebook(ttk.Notebook, object):
     def __init__(self, parent, tab_labels, canvaswidth=500):
@@ -1001,20 +1049,33 @@ class App(Tk.Tk, object):
 
         # -- Set up the frames --
         self.subframes = OrderedDict()
+        self.toggledframes = OrderedDict()
         if 'frames' in yamldict:
             for frame in yamldict['frames']:
                 name = frame['name']
                 tab  = self.notebook.tab(frame['tab'])
-                self.subframes[name] = Tk.LabelFrame(tab)
-                if 'row' in frame:
-                    self.subframes[name].grid(column=0, row=frame['row'],
-                                              padx=10,pady=10, 
-                                              columnspan=4, sticky='w')
+                toggled = True if (('toggled' in frame) and frame['toggled']) else False
+                if toggled:
+                    title = '' if ('title' not in frame) else frame['title']
+                    state = 0 if ('initstate' not in frame) else frame['initstate']
+                    self.toggledframes[name] = ToggledFrame(tab, text=title, 
+                                                            relief="raised", 
+                                                            initstate=state,
+                                                            borderwidth=1)
+                    self.subframes[name] = self.toggledframes[name].sub_frame
+                    subframelayout = self.toggledframes[name].title_frame
                 else:
-                    self.subframes[name].grid(column=0, padx=10,pady=10,
-                                              columnspan=4, sticky='w') 
-                if 'title' in frame:
-                    Tk.Label(self.subframes[name], 
+                    self.subframes[name] = Tk.LabelFrame(tab)
+                    subframelayout = self.subframes[name]
+                if 'row' in frame:
+                    subframelayout.grid(column=0, row=frame['row'],
+                                        padx=10,pady=10, 
+                                        columnspan=4, sticky='w')
+                else:
+                    subframelayout.grid(column=0, padx=10,pady=10,
+                                            columnspan=4, sticky='w') 
+                if ('title' in frame) and (not toggled):
+                    Tk.Label(subframelayout, 
                              text=frame['title']).grid(row=0, column=0, 
                                                        columnspan=4,
                                                        sticky='w')
@@ -1068,7 +1129,7 @@ class App(Tk.Tk, object):
             if self.inputvars[key].ctrlelem is not None:
                 self.inputvars[key].linkctrlelem(self.subframes, self.inputvars)
                 self.inputvars[key].onoffctrlelem(None)
-        
+
         # -- Button demonstrating pullvals --
         # button = Tk.Button(master=self.notebook.tab('Tab 1'),text="Pullvals", 
         #                    command=partial(pullvals, self.inputvars, 
@@ -1089,8 +1150,14 @@ class App(Tk.Tk, object):
         return
 
     def tabframeselector(self, d):
-        if 'frame' in d:  return self.subframes[d['frame']]
-        else:             return self.notebook.tab(d['tab'])
+        if 'frame' in d:  
+            dframe = self.subframes[d['frame']]
+            if (isinstance(dframe, ToggledFrame)):
+                return dframe.sub_frame
+            else:
+                return dframe #self.subframes[d['frame']]
+        else:             
+            return self.notebook.tab(d['tab'])
 
     def formatgridrows(self, minsize=25):
         for tabname in self.alltabslist:
