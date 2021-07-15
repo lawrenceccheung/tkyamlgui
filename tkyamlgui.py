@@ -103,7 +103,7 @@ class ToggledFrame(Tk.Frame):
         ttk.Label(self.header_frame, text=" "+text, width=w).grid(row=0, column=1,
                                                               sticky='w')
 
-        self.toggle_button = ttk.Checkbutton(self.header_frame, #width=8, 
+        self.toggle_button = ttk.Checkbutton(self.header_frame, width=5, 
                                              text='[show]', 
                                              command=self.toggle,
                                              variable=self.show, 
@@ -580,6 +580,7 @@ class inputwidget:
         self.tkentry.insert(0, filename)
         return filename
 
+    # DELETE THIS!  OBSOLETE!
     def onoffframe(self):
         if self.var.get() == 1:
             for child in self.ctrlframe.winfo_children():
@@ -804,7 +805,9 @@ class popupwindow(Tk.Toplevel, object):
                     text  = button['text']
                     cmdstr= button['command']
                     col   = getdictval(button, 'col', 0)
-                    b  = Tk.Button(master=self.drawframe,
+                    widgetframe = getdictval(button, 'frame', None)
+                    targetframe = self.drawframe if widgetframe is None else self.popup_subframes[widgetframe]
+                    b  = Tk.Button(master=targetframe, #self.drawframe,
                                    text=text,command=eval(cmdstr))
                     if 'row' in button:
                         b.grid(row=button['row'], column=col,padx=5,sticky='w')
@@ -821,9 +824,15 @@ class popupwindow(Tk.Toplevel, object):
             # Add the close button
             Tk.Button(self.drawframe,
                       text=closebtxt, command=self.okclose).grid(row=row, column=col)
-            col_count, row_count = self.grid_size()
-            for n in range(row_count): 
-                self.grid_rowconfigure(n, minsize=25)
+            # col_count, row_count = self.drawframe.grid_size()
+            # for n in range(row_count): 
+            #     self.drawframe.grid_rowconfigure(n, minsize=25, weight=1) 
+
+            for key, frame in self.popup_subframes.items():
+                col_count, row_count = frame.grid_size()
+                #print('key = %s col = %i row = %i'%(key, col_count, row_count))
+                for n in range(row_count):
+                    frame.grid_rowconfigure(n, minsize=15, weight=1)
         return
 
     def savevals(self):
@@ -868,6 +877,8 @@ class listboxpopupwindows():
         self.row        = getdictval(listboxdict, 'row',    None)
         self.listboxopt = getdictval(listboxdict, 'listboxopt', {})
         self.label      = getdictval(listboxdict, 'label', 'Label')
+        self.editsavebutton = getdictval(listboxdict, 'editsavebutton', True)
+        self.closebuttontxt = getdictval(listboxdict, 'closebuttontxt', 'Save & Close')
         self.tklabel    = Tk.Label(frame, text=self.label)
         self.yscroll    = Tk.Scrollbar(frame, orient=Tk.VERTICAL)
         self.tkentry    = Tk.Listbox(self.frame, height=self.height,
@@ -968,7 +979,7 @@ class listboxpopupwindows():
         storeddata = OrderedDict()
         #popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
         popupwindow(self.parent, self.frame, self.popupwindict, storeddata,
-                    savebutton=False, closebtxt='Save & Close',
+                    savebutton=False, closebtxt=self.closebuttontxt, 
                     entrynum=len(self.alldataentries),
                     extraclosefunc=partial(self.insertdata, storeddata))
         return
@@ -983,6 +994,8 @@ class listboxpopupwindows():
         storeddata = self.alldataentries[selected[0]]
         #p=popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
         p=popupwindow(self.parent, self.frame, self.popupwindict, storeddata,
+                      savebutton=self.editsavebutton,
+                      closebtxt=self.closebuttontxt,
                       extraclosefunc=self.checknamechange)
         #for key, data in p.temp_inputvars.items(): print("edit key %s"%key)
         return
@@ -1036,7 +1049,8 @@ class listboxpopupwindows():
 # -- Done listofpopupwindows --
 
 class messagewindow():
-    def __init__(self, toproot, mesg, autowidth=True, height=5):
+    def __init__(self, toproot, mesg, autowidth=True, height=5, 
+                 activetext=False):
         width=len(max(mesg.split("\n"), key = len)) if autowidth else 40
         self.mesgwin     = Tk.Toplevel(toproot)
         self.text_widget = Tk.Text(self.mesgwin, height=height, width=width)
@@ -1046,8 +1060,9 @@ class messagewindow():
         self.scroll_bar.grid(row=0, column=1, sticky="ns")
         self.text_widget.grid(row=0, column=0)
         self.text_widget.configure(yscrollcommand=self.scroll_bar.set)
-        #self.text_widget.insert(Tk.END, long_text)
         self.text_widget.insert(Tk.END, mesg)
+        if not activetext:
+            self.text_widget.configure(state='disabled', bg='light gray')
         self.button = Tk.Button(self.mesgwin, command=self.quit, text="Close")
         self.button.grid(row=1)
 
