@@ -739,6 +739,38 @@ class popupwindow(Tk.Toplevel, object):
         if popupgui==False: print("Initiating no gui")
         if hidden: self.withdraw()
 
+        # Add some frames to the pop-up window
+        self.popup_subframes = OrderedDict()
+        self.popup_toggledframes   = OrderedDict()
+        if 'frames' in defdict:
+            for frame in defdict['frames']:
+                toggled = True if (('toggled' in frame) and frame['toggled']) else False
+                name = frame['name']
+                if toggled:
+                    title = '' if ('title' not in frame) else frame['title']
+                    state = 0 if ('initstate' not in frame) else frame['initstate']
+                    self.popup_toggledframes[name] = ToggledFrame(self.drawframe,
+                                                            text=title, 
+                                                            relief="raised", 
+                                                            initstate=state,
+                                                            borderwidth=1)
+                    self.popup_subframes[name] = self.popup_toggledframes[name].sub_frame
+                    subframelayout = self.popup_toggledframes[name].title_frame
+                else:
+                    self.popup_subframes[name] = Tk.LabelFrame(self.drawframe)
+                    subframelayout = self.popup_subframes[name]
+                # Put frame on grid
+                kwargs = {}
+                if 'row' in frame: kwargs['row'] = frame['row']
+                subframelayout.grid(column=0, padx=10,pady=10, 
+                                    columnspan=4, sticky='w',
+                                    **kwargs)
+                if ('title' in frame) and (not toggled):
+                    Tk.Label(self.popup_subframes[name], 
+                             text=frame['title']).grid(row=0, column=0, 
+                                                       columnspan=4,
+                                                       sticky='w')
+        
         # populate the window
         self.temp_inputvars = OrderedDict()
         for widget in defdict['inputwidgets']:
@@ -747,7 +779,9 @@ class popupwindow(Tk.Toplevel, object):
             #widgetcopy['visible']    = popupgui
             if getdictval(widget, 'labelonly', False) is False: 
                 widgetcopy['defaultval'] = self.stored_inputvars[name]
-            iwidget = inputwidget.fromdict(self.drawframe, 
+            widgetframe = None #getdictval(widget, 'frame', None)
+            targetframe = self.drawframe if widgetframe is None else self.popup_subframes[widgetframe]
+            iwidget = inputwidget.fromdict(targetframe, #self.drawframe, 
                                            widgetcopy, parent=parent,
                                            allinputs=self.temp_inputvars)
             self.temp_inputvars[name] = iwidget
