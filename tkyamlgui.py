@@ -126,6 +126,75 @@ class ToggledFrame(Tk.Frame):
         self.show.set(state)
         self.toggle()
 
+class VerticalScrolledFrame:
+    """
+    A vertically scrolled Frame that can be treated like any other Frame
+    ie it needs a master and layout and it can be a master.
+    :width:, :height:, :bg: are passed to the underlying Canvas
+    :bg: and all other keyword arguments are passed to the inner Frame
+    note that a widget layed out in this frame will have a self.master 3 layers deep,
+    (outer Frame, Canvas, inner Frame) so 
+    if you subclass this there is no built in way for the children to access it.
+    You need to provide the controller separately.
+    """
+    # See https://gist.github.com/novel-yet-trivial/3eddfce704db3082e38c84664fc1fdf8
+    def __init__(self, master, **kwargs):
+        width = kwargs.pop('width', None)
+        height = kwargs.pop('height', None)
+        bg = kwargs.pop('bg', kwargs.pop('background', None))
+        self.outer = Tk.Frame(master, **kwargs)
+
+        self.vsb = Tk.Scrollbar(self.outer, orient=Tk.VERTICAL)
+        self.vsb.pack(fill=Tk.Y, side=Tk.RIGHT)
+        self.canvas = Tk.Canvas(self.outer, highlightthickness=0, width=width, height=height, bg=bg)
+        self.canvas.pack(side=Tk.LEFT, fill=Tk.BOTH, expand=True)
+        self.canvas['yscrollcommand'] = self.vsb.set
+        # mouse scroll does not seem to work with just "bind"; You have
+        # to use "bind_all". Therefore to use multiple windows you have
+        # to bind_all in the current widget
+        self.canvas.bind("<Enter>", self._bind_mouse)
+        self.canvas.bind("<Leave>", self._unbind_mouse)
+        self.vsb['command'] = self.canvas.yview
+
+        self.inner = Tk.Frame(self.canvas, bg=bg)
+        # pack the inner Frame into the Canvas with the topleft corner 4 pixels offset
+        self.canvas.create_window(4, 4, window=self.inner, anchor='nw')
+        self.inner.bind("<Configure>", self._on_frame_configure)
+
+        self.outer_attr = set(dir(Tk.Widget))
+
+    def __getattr__(self, item):
+        if item in self.outer_attr:
+            # geometry attributes etc (eg pack, destroy, tkraise) are passed on to self.outer
+            return getattr(self.outer, item)
+        else:
+            # all other attributes (_w, children, etc) are passed to self.inner
+            return getattr(self.inner, item)
+
+    def _on_frame_configure(self, event=None):
+        x1, y1, x2, y2 = self.canvas.bbox("all")
+        height = self.canvas.winfo_height()
+        self.canvas.config(scrollregion = (0,0, x2, max(y2, height)))
+
+    def _bind_mouse(self, event=None):
+        self.canvas.bind_all("<4>", self._on_mousewheel)
+        self.canvas.bind_all("<5>", self._on_mousewheel)
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+
+    def _unbind_mouse(self, event=None):
+        self.canvas.unbind_all("<4>")
+        self.canvas.unbind_all("<5>")
+        self.canvas.unbind_all("<MouseWheel>")
+
+    def _on_mousewheel(self, event):
+        """Linux uses event.num; Windows / Mac uses event.delta"""
+        if event.num == 4 or event.delta > 0:
+            self.canvas.yview_scroll(-1, "units" )
+        elif event.num == 5 or event.delta < 0:
+            self.canvas.yview_scroll(1, "units" )
+
+    def __str__(self):
+        return str(self.outer)
 
 #
 # See https://stackoverflow.com/questions/58045626/scrollbar-in-tkinter-notebook-frames
@@ -142,13 +211,14 @@ class YScrolledFrame(Tk.Frame, object):
         scroll = Tk.Scrollbar(self, command=canvas.yview, orient=Tk.VERTICAL)
         canvas.config(yscrollcommand=scroll.set)
         scroll.grid(row=0, column=1, sticky='nsew')
+        self.yscroll = scroll
 
         self.content = Tk.Frame(canvas)
-        self.canvas.create_window(0, 0, window=self.content, anchor="nw")
+        self.window = self.canvas.create_window(0, 0, window=self.content, anchor="nw")
 
-        self.bind('<Configure>', self.on_configure)
+        self.canvas.bind('<Configure>', self.on_configure)
         self.content.bind('<Configure>', self.reset_scrollregion)
-
+        
     def on_configure(self, event):
         bbox = self.content.bbox('ALL')
         self.canvas.config(scrollregion=bbox)
@@ -156,18 +226,35 @@ class YScrolledFrame(Tk.Frame, object):
     def reset_scrollregion(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox('all'))
 
+    def onCanvasConfigure(self, event):
+        #Resize the inner frame to match the canvas
+        minWidth = self.content.winfo_reqwidth()
+        minHeight = self.content.winfo_reqheight()
+
+        newWidth = self.winfo_width()
+        newHeight = event.height
+        #self.canvas.itemconfig(self.window, height=minHeight)
+        self.config(width=newWidth, height=newHeight)
+        bbox = self.content.bbox('ALL')
+        self.canvas.config(scrollregion=bbox)
+
+
 class Notebook(ttk.Notebook, object):
-    def __init__(self, parent, tab_labels, canvaswidth=500):
+    def __init__(self, parent, tab_labels, canvaswidth=500, canvasheight=500):
         super(Notebook, self).__init__(parent)
 
         self._tab = {}
         for text in tab_labels:
-            self._tab[text] = YScrolledFrame(self, canvaswidth=canvaswidth)
+            #self._tab[text] = YScrolledFrame(self, canvaswidth=canvaswidth)
+            self._tab[text] = VerticalScrolledFrame(self, 
+                                                    width=canvaswidth,
+                                                    height=canvasheight)
+            self._tab[text].pack(fill=Tk.BOTH, expand=True)
             # layout by .add defaults to fill=Tk.BOTH, expand=True
             self.add(self._tab[text], text=text, compound=Tk.TOP)
 
     def tab(self, key):
-        return self._tab[key].content
+        return self._tab[key] #.content
 
 def tkextractval(inputtype, tkvar, tkentry, optionlist=[]):
     if inputtype is bool:
@@ -621,14 +708,27 @@ class popupwindow(Tk.Toplevel, object):
                  extraclosefunc=None, savebutton=True, 
                  savebtxt='Save', closebtxt='Close', entrynum=None,
                  quitafterinit=False, popupgui=True, hidden=False):
+        self.scrollframe=scrollframe=True
         if popupgui:
             super(popupwindow, self).__init__(parent)
             if 'title' in defdict: self.wm_title(defdict['title'])
+            if scrollframe:
+                #self.scrolledframe = YScrolledFrame(self, canvaswidth=500, 
+                #                                    canvasheight=200)
+                self.scrolledframe = VerticalScrolledFrame(self, 
+                                                           width=500)
+                self.scrolledframe.pack(fill=Tk.BOTH, expand=True) # fill window
+                #self.scrolledframe.grid(row=0, column=0, sticky='nsew')
+
         self.parent = parent
         self.master = master
         self.extraclosefunc = extraclosefunc
         self.datakeyname    = getdictval(defdict, 'datakeyname', None)
         self.stored_inputvars=stored_inputvars
+
+        self.drawframe = self
+        if scrollframe and popupgui:
+            self.drawframe = self.scrolledframe
 
         # Initialize the values if stored_inputvars is empty
         if not stored_inputvars:
@@ -647,7 +747,8 @@ class popupwindow(Tk.Toplevel, object):
             #widgetcopy['visible']    = popupgui
             if getdictval(widget, 'labelonly', False) is False: 
                 widgetcopy['defaultval'] = self.stored_inputvars[name]
-            iwidget = inputwidget.fromdict(self, widgetcopy, parent=parent,
+            iwidget = inputwidget.fromdict(self.drawframe, 
+                                           widgetcopy, parent=parent,
                                            allinputs=self.temp_inputvars)
             self.temp_inputvars[name] = iwidget
         # link any widgets necessary
@@ -668,7 +769,8 @@ class popupwindow(Tk.Toplevel, object):
                     text  = button['text']
                     cmdstr= button['command']
                     col   = getdictval(button, 'col', 0)
-                    b  = Tk.Button(master=self,text=text,command=eval(cmdstr))
+                    b  = Tk.Button(master=self.drawframe,
+                                   text=text,command=eval(cmdstr))
                     if 'row' in button:
                         b.grid(row=button['row'], column=col,padx=5,sticky='w')
                     else:
@@ -678,10 +780,12 @@ class popupwindow(Tk.Toplevel, object):
             row = len(defdict['inputwidgets'])+1  #row+3
             col=0
             if savebutton:
-                Tk.Button(self,text=savebtxt,command=self.savevals).grid(row=row, column=0)
+                Tk.Button(self.drawframe,
+                          text=savebtxt,command=self.savevals).grid(row=row, column=0)
             col=1
             # Add the close button
-            Tk.Button(self,text=closebtxt, command=self.okclose).grid(row=row, column=col)
+            Tk.Button(self.drawframe,
+                      text=closebtxt, command=self.okclose).grid(row=row, column=col)
             col_count, row_count = self.grid_size()
             for n in range(row_count): 
                 self.grid_rowconfigure(n, minsize=25)
@@ -713,6 +817,7 @@ class popupwindow(Tk.Toplevel, object):
         self.savevals()
         eval(cmdstr)
         return
+
 # -- Done popupwindow --
 
 
