@@ -713,12 +713,13 @@ class popupwindow(Tk.Toplevel, object):
             super(popupwindow, self).__init__(parent)
             if 'title' in defdict: self.wm_title(defdict['title'])
             if scrollframe:
-                #self.scrolledframe = YScrolledFrame(self, canvaswidth=500, 
-                #                                    canvasheight=200)
+                width  = getdictval(defdict, 'width', 500)
+                height = getdictval(defdict, 'height', 500)
                 self.scrolledframe = VerticalScrolledFrame(self, 
-                                                           width=500)
+                                                           width=width,
+                                                           height=height)
                 self.scrolledframe.pack(fill=Tk.BOTH, expand=True) # fill window
-                #self.scrolledframe.grid(row=0, column=0, sticky='nsew')
+
 
         self.parent = parent
         self.master = master
@@ -740,8 +741,8 @@ class popupwindow(Tk.Toplevel, object):
         if hidden: self.withdraw()
 
         # Add some frames to the pop-up window
-        self.popup_subframes = OrderedDict()
-        self.popup_toggledframes   = OrderedDict()
+        self.popup_subframes     = OrderedDict()
+        self.popup_toggledframes = OrderedDict()
         if 'frames' in defdict:
             for frame in defdict['frames']:
                 toggled = True if (('toggled' in frame) and frame['toggled']) else False
@@ -779,7 +780,7 @@ class popupwindow(Tk.Toplevel, object):
             #widgetcopy['visible']    = popupgui
             if getdictval(widget, 'labelonly', False) is False: 
                 widgetcopy['defaultval'] = self.stored_inputvars[name]
-            widgetframe = None #getdictval(widget, 'frame', None)
+            widgetframe = getdictval(widget, 'frame', None)
             targetframe = self.drawframe if widgetframe is None else self.popup_subframes[widgetframe]
             iwidget = inputwidget.fromdict(targetframe, #self.drawframe, 
                                            widgetcopy, parent=parent,
