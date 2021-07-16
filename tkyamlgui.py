@@ -1269,13 +1269,17 @@ class App(Tk.Tk, object):
                 frame = self.tabframeselector(button)
                 text  = button['text']
                 cmdstr= button['command']
-                if 'col' in button: col=button['col']
-                else:               col=0
-                b  = Tk.Button(master=frame,text=text,command=eval(cmdstr))
-                if 'row' in button:
-                    b.grid(row=button['row'], column=col, padx=5, sticky='w')
-                else:
-                    b.grid(column=col, padx=5, sticky='w')
+                kwargs= getdictval(button, 'buttonoptions', {})
+                b  = Tk.Button(master=frame, text=text, command=eval(cmdstr), 
+                               **kwargs)
+                # Set up the grid layout
+                col = getdictval(button, 'col', 0)
+                gridopts = getdictval(button, 'gridoptions',{})
+                if 'row' in button:          gridopts['row'] = button['row']
+                if 'sticky' not in gridopts: gridopts['sticky'] = 'w'
+                if 'padx'   not in gridopts: gridopts['padx']   = 5
+                b.grid(column=col, **gridopts)
+                # Add a tool tip
                 if 'help' in button:
                     CreateToolTip(b, button['help'])
 
@@ -1306,12 +1310,19 @@ class App(Tk.Tk, object):
 
     def tabframeselector(self, d):
         if 'frame' in d:  
-            dframe = self.subframes[d['frame']]
-            if (isinstance(dframe, ToggledFrame)):
-                return dframe.sub_frame
+            framename = d['frame'].split()
+            dframe = self.subframes[framename[0]]
+            if (framename[0] in self.toggledframes):
+                # Return some part of toggle frame
+                if (len(framename)>1) and (framename[1]=='header_frame'):
+                    return self.toggledframes[framename[0]].header_frame
+                else:
+                    return dframe #.sub_frame
             else:
+                # Just a normal frame
                 return dframe #self.subframes[d['frame']]
-        else:             
+        else:     
+            # no frames, just tabs
             return self.notebook.tab(d['tab'])
 
     def formatgridrows(self, minsize=25):
