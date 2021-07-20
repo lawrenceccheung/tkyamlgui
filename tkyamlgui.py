@@ -107,7 +107,7 @@ class ToggledFrame(Tk.Frame):
                                              text='[show]', 
                                              command=self.toggle,
                                              variable=self.show, 
-                                             style='Toolbutton')
+                                             style='Demo.TButton') #'Toolbutton')
         self.toggle_button.grid(row=0, column=0)
 
         self.sub_frame = Tk.Frame(self.title_frame, #relief="sunken",
@@ -247,7 +247,7 @@ class Notebook(ttk.Notebook, object):
         for text in tab_labels:
             #self._tab[text] = YScrolledFrame(self, canvaswidth=canvaswidth)
             self._tab[text] = VerticalScrolledFrame(self, 
-                                                    width=canvaswidth,
+                                                    width=canvaswidth, 
                                                     height=canvasheight)
             self._tab[text].pack(fill=Tk.BOTH, expand=True)
             # layout by .add defaults to fill=Tk.BOTH, expand=True
@@ -1161,15 +1161,17 @@ class App(Tk.Tk, object):
         # Set up the menu bar
         if menufunc is not None:   menufunc(self)
         else:                      self.menubar(self)
-
+        self.masterframe = VerticalScrolledFrame(self)
+        self.masterframe.pack(fill=Tk.BOTH, expand=True) # fill window
         # Set up the status bar
         self.statusbar = Tk.Label(self, text="%200s"%" ", 
                                   bd=1, relief=Tk.SUNKEN, anchor=Tk.W)
-        self.statusbar.grid(row=1, columnspan=2, sticky='w')
+        # self.statusbar.grid(row=1, columnspan=2, sticky='w')
 
         # Get the drawing window
-        self.center = Tk.Frame(self, width=leftframew, height=500)
-        self.center.grid(row=0, column=1, sticky='nsew')
+        self.center = Tk.Frame(self.masterframe, width=leftframew, height=500)
+        #self.center.grid(row=0, column=1, sticky='nsew')
+        self.center.pack(side=Tk.RIGHT, fill=Tk.BOTH, expand=True)
         self.dpi=100
         self.fig = Figure(figsize=(leftframew/self.dpi, 500/self.dpi),
                           dpi=self.dpi, facecolor='white')
@@ -1186,9 +1188,12 @@ class App(Tk.Tk, object):
         self.figcanvas.get_tk_widget().grid(row=0, column=0, sticky='nsew')
 
         # The input frame is leftframe
-        self.leftframe=Tk.Frame(self, width=leftframew, height=530)
-        self.leftframe.grid(row=0, column=0, sticky='nsew')
-        self.leftframe.grid_propagate(0)
+        self.leftframeh = 600 # 530
+        self.leftframe=Tk.Frame(self.masterframe, width=leftframew) #530
+        self.leftframe.pack(side=Tk.LEFT, fill=Tk.BOTH, expand=True)
+        #self.leftframe=Tk.Frame(self.masterframe, width=leftframew, height=530) #530
+        #self.leftframe.grid(row=0, column=0, sticky='nsew')
+        #self.leftframe.grid_propagate(0)
 
         # Load the yaml input file
         with open(configyaml) as fp:
@@ -1211,8 +1216,9 @@ class App(Tk.Tk, object):
 
         # -- Set up the tabs --
         self.alltabslist = yamldict['tabs']
-        self.notebook = Notebook(self.leftframe, self.alltabslist)
-        self.notebook.grid(row=0, column=0, sticky='nsew')
+        self.notebook = Notebook(self.leftframe, self.alltabslist, canvasheight=self.leftframeh)
+        self.notebook.pack(side=Tk.LEFT, fill=Tk.BOTH, expand=True)
+        #self.notebook.grid(row=0, column=0, sticky='nsew')
 
         # -- Set up the frames --
         self.subframes = OrderedDict()
