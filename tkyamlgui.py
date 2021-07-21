@@ -327,7 +327,7 @@ class inputwidget:
                  defaultval=None, optionlist=[], 
                  listboxopt={},  fileopenopt={},
                  ctrlframe=None, ctrlelem=None,
-                 labelonly=False, visible=True, 
+                 labelonly=False, visible=True, entryopt={},
                  outputdef={}, mergedboollist=[], allinputs=None):
         defaultw       = 12
         self.name      = name
@@ -349,6 +349,8 @@ class inputwidget:
             self.tklabel   = Tk.Label(frame, text=label) 
         else:
             self.tklabel   = None
+        if 'width' not in entryopt:  entryopt['width'] = defaultw
+        self.entryopt  = entryopt
         if inputtype == moretypes.mergedboollist: return
 
         if visible:
@@ -402,14 +404,15 @@ class inputwidget:
             optlist = eval(optionlist) if isinstance(optionlist,str) else optionlist
             if len(optlist)==0: optlist=['']
             self.tkentry   = Tk.OptionMenu(frame, self.var, *optlist)
+            #self.tkentry.config(**self.entryopt)
             if defaultval is not None: self.var.set(defaultval)
         elif (inputtype is str):
             self.var       = Tk.StringVar()
-            self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
+            self.tkentry   = Tk.Entry(master=frame, **self.entryopt) 
             self.tkentry.insert(0, repr(defaultval).strip("'").strip('"'))
         elif (inputtype is moretypes.filename):
             self.var       = Tk.StringVar()
-            self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
+            self.tkentry   = Tk.Entry(master=frame, **self.entryopt) 
             if defaultval is not None: 
                 self.tkentry.insert(0, repr(defaultval).strip("'").strip('"'))
             # Add a button to choose filename
@@ -424,11 +427,11 @@ class inputwidget:
             self.tkentry   = []
             for i in range(N):
                 self.var.append(None)
-                self.tkentry.append(Tk.Entry(master=frame, width=defaultw))
+                self.tkentry.append(Tk.Entry(master=frame, **self.entryopt))
                 if defaultval is not None:
                     self.tkentry[i].insert(0, repr(defaultval[i]).strip("'").strip('"'))
         else:
-            self.tkentry   = Tk.Entry(master=frame, width=defaultw) 
+            self.tkentry   = Tk.Entry(master=frame, **self.entryopt) 
             self.tkentry.insert(0, repr(defaultval).strip("'").strip('"'))
         # Add the entry to the frame
         if visible:
@@ -691,12 +694,14 @@ class inputwidget:
         outputdef  = getdictval(d, 'outputdef', {})
         listboxopt = getdictval(d, 'listboxopt', {})
         fileopenopt= getdictval(d, 'fileopenopt', {})
+        entryopt   = getdictval(d, 'entryopt', {})
+
         # Return the widget
         return cls(frame, row, inputtype, name, label, parent=parent,
                    defaultval=defaultval, optionlist=optionlist,
                    listboxopt=listboxopt, fileopenopt=fileopenopt,
                    ctrlframe=ctrlframe,   ctrlelem=ctrlelem,
-                   labelonly=labelonly,
+                   labelonly=labelonly,   entryopt=entryopt,
                    outputdef=outputdef, mergedboollist=mergedboollist,
                    allinputs=allinputs, visible=visible)
 # -- Done inputwidget --
