@@ -452,10 +452,13 @@ class inputwidget:
             if isinstance(self.inputtype, list):
                 val = []
                 for i in range(len(self.inputtype)):
-                    ival = tkextractval(self.inputtype[i], 
-                                        self.var[i], 
-                                        self.tkentry[i])
-                    val.append(ival)
+                    try:
+                        ival = tkextractval(self.inputtype[i], 
+                                            self.var[i], 
+                                            self.tkentry[i])
+                        val.append(ival)
+                    except:
+                        pass
             elif (self.inputtype == moretypes.mergedboollist):
                 val = []
                 for var in self.mergedboollist:
@@ -490,7 +493,10 @@ class inputwidget:
                 if statedisabled and forcechange:
                     itkentry.config(state='normal')                    
                 itkentry.delete(0, Tk.END)
-                itkentry.insert(0, repr(listval[i]).strip("'").strip('"'))
+                if i < len(listval):
+                    itkentry.insert(0, repr(listval[i]).strip("'").strip('"'))
+                else:
+                    print("Cannot set %s entry i=%i"%(self.name, i))
                 if statedisabled and forcechange: # Reset the state
                     itkentry.config(state='disabled')                    
         else: 
