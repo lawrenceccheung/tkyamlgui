@@ -1187,7 +1187,7 @@ class App(Tk.Tk, object):
         self.figcanvas.get_tk_widget().grid(row=0, column=0, sticky='nsew')
 
         # The input frame is leftframe
-        self.leftframeh = 600 # 530
+        self.leftframeh = 580 # 530
         self.leftframe=Tk.Frame(self.masterframe, width=leftframew) #530
         self.leftframe.pack(side=Tk.LEFT, fill=Tk.BOTH, expand=True)
         #self.leftframe=Tk.Frame(self.masterframe, width=leftframew, height=530) #530
