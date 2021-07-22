@@ -452,13 +452,10 @@ class inputwidget:
             if isinstance(self.inputtype, list):
                 val = []
                 for i in range(len(self.inputtype)):
-                    try:
-                        ival = tkextractval(self.inputtype[i], 
-                                            self.var[i], 
-                                            self.tkentry[i])
-                        val.append(ival)
-                    except:
-                        pass
+                    ival = tkextractval(self.inputtype[i], 
+                                        self.var[i], 
+                                        self.tkentry[i])
+                    val.append(ival)
             elif (self.inputtype == moretypes.mergedboollist):
                 val = []
                 for var in self.mergedboollist:
@@ -495,6 +492,8 @@ class inputwidget:
                 itkentry.delete(0, Tk.END)
                 if i < len(listval):
                     itkentry.insert(0, repr(listval[i]).strip("'").strip('"'))
+                else:
+                    print("WARNING: cannot set %s entry i=%i"%(self.name, i))
                 if statedisabled and forcechange: # Reset the state
                     itkentry.config(state='disabled')                    
         else: 
@@ -1157,7 +1156,7 @@ class App(Tk.Tk, object):
         if withdraw: self.withdraw()
         self.leftframew = leftframew
         self.wm_title(title)
-        self.geometry("1050x575")
+        self.geometry("1050x625")
         # Set up the menu bar
         if menufunc is not None:   menufunc(self)
         else:                      self.menubar(self)
