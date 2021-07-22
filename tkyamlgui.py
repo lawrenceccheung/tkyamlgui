@@ -175,9 +175,12 @@ class VerticalScrolledFrame:
     def _on_frame_configure(self, event=None):
         x1, y1, x2, y2 = self.canvas.bbox("all")
         height = self.canvas.winfo_height()
-        self.canvas.config(scrollregion = (0,0, x2, max(y2, height)))
-        if self.extraconfigfunc is not None:
-            self.extraconfigfunc()
+        try:
+            self.canvas.config(scrollregion = (0,0, x2, max(y2, height)))
+            if self.extraconfigfunc is not None:
+                self.extraconfigfunc()
+        except:
+            pass
 
     def _bind_mouse(self, event=None):
         self.canvas.bind_all("<4>", self._on_mousewheel)
