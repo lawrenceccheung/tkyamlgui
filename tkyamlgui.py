@@ -138,11 +138,12 @@ class VerticalScrolledFrame:
     You need to provide the controller separately.
     """
     # See https://gist.github.com/novel-yet-trivial/3eddfce704db3082e38c84664fc1fdf8
-    def __init__(self, master, **kwargs):
+    def __init__(self, master, extraconfigfunc=None, **kwargs):
         width = kwargs.pop('width', None)
         height = kwargs.pop('height', None)
         bg = kwargs.pop('bg', kwargs.pop('background', None))
         self.outer = Tk.Frame(master, **kwargs)
+        self.extraconfigfunc = extraconfigfunc;
 
         self.vsb = Tk.Scrollbar(self.outer, orient=Tk.VERTICAL)
         self.vsb.pack(fill=Tk.Y, side=Tk.RIGHT)
@@ -175,6 +176,8 @@ class VerticalScrolledFrame:
         x1, y1, x2, y2 = self.canvas.bbox("all")
         height = self.canvas.winfo_height()
         self.canvas.config(scrollregion = (0,0, x2, max(y2, height)))
+        if self.extraconfigfunc is not None:
+            self.extraconfigfunc()
 
     def _bind_mouse(self, event=None):
         self.canvas.bind_all("<4>", self._on_mousewheel)
@@ -1160,7 +1163,8 @@ class App(Tk.Tk, object):
         # Set up the menu bar
         if menufunc is not None:   menufunc(self)
         else:                      self.menubar(self)
-        self.masterframe = VerticalScrolledFrame(self)
+        self.bind("<Configure>", self.onconfigure)
+        self.masterframe = VerticalScrolledFrame(self, extraconfigfunc=None)
         self.masterframe.pack(fill=Tk.BOTH, expand=True) # fill window
         # Set up the status bar
         self.statusbar = Tk.Label(self, text="%200s"%" ", 
@@ -1375,6 +1379,16 @@ class App(Tk.Tk, object):
                                     forcechange=True)
                 extradict.pop(key)
         return extradict  # Return any unused entries
+
+    def onconfigure(self,event=None):
+        # Clear and resize figure
+        canvaswidget=self.figcanvas.get_tk_widget()
+        w,h1 = self.winfo_width(), self.winfo_height()
+        #print("w = %i h1 = %i"%(w, h1))
+        try:
+            canvaswidget.configure(width=w-self.leftframew-10, height=h1-75)
+        except:
+            pass
     
     def updateplot(self):
         input1=self.inputvars['input_1'].getval()
