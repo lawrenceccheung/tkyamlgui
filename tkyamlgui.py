@@ -495,8 +495,6 @@ class inputwidget:
                 itkentry.delete(0, Tk.END)
                 if i < len(listval):
                     itkentry.insert(0, repr(listval[i]).strip("'").strip('"'))
-                else:
-                    print("Cannot set %s entry i=%i"%(self.name, i))
                 if statedisabled and forcechange: # Reset the state
                     itkentry.config(state='disabled')                    
         else: 
@@ -811,7 +809,9 @@ class popupwindow(Tk.Toplevel, object):
         
         if popupgui:
         # -- Set up the buttons --
+            Nbuttons = 0
             if 'buttons' in defdict:
+                Nbuttons = len(defdict['buttons'])
                 for button in defdict['buttons']:
                     text  = button['text']
                     cmdstr= button['command']
@@ -826,7 +826,7 @@ class popupwindow(Tk.Toplevel, object):
                         b.grid(column=col, padx=5, sticky='w')
 
             # Add the save button
-            row = len(defdict['inputwidgets'])+1  #row+3
+            row = len(defdict['inputwidgets'])+Nbuttons+1  #row+3
             col=0
             if savebutton:
                 Tk.Button(self.drawframe,
