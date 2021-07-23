@@ -524,6 +524,7 @@ class inputwidget:
             elif self.inputtype==moretypes.listbox:
                 listval = val
                 if strinput: listval = re.split(r'[,; ]+', val)
+                self.tkentry.selection_clear(0, Tk.END)
                 for v in listval:
                     # set the value to active
                     allopts = eval(self.optionlist) if isinstance(self.optionlist,str) else self.optionlist
