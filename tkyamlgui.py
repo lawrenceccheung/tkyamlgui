@@ -437,11 +437,16 @@ class inputwidget:
             N              = len(inputtype)
             self.var       = []
             self.tkentry   = []
+            #varlistlength
+            self.listN     = N if defaultval is None else len(defaultval)
+            self.varlenlist= entryopt.pop('varlenlist', False)
+            #self.varlenlist= getdictval(entryopt, 'varlenlist', False)
             for i in range(N):
                 self.var.append(None)
                 self.tkentry.append(Tk.Entry(master=frame, **self.entryopt))
                 if defaultval is not None:
-                    self.tkentry[i].insert(0, repr(defaultval[i]).strip("'").strip('"'))
+                    if i < len(defaultval): #varlistlength
+                        self.tkentry[i].insert(0, repr(defaultval[i]).strip("'").strip('"'))
         else:
             self.tkentry   = Tk.Entry(master=frame, **self.entryopt) 
             self.tkentry.insert(0, repr(defaultval).strip("'").strip('"'))
@@ -463,11 +468,20 @@ class inputwidget:
         try:
             if isinstance(self.inputtype, list):
                 val = []
-                for i in range(len(self.inputtype)):
-                    ival = tkextractval(self.inputtype[i], 
-                                        self.var[i], 
-                                        self.tkentry[i])
-                    val.append(ival)
+                #for i in range(len(self.inputtype)):
+                for i in range(self.listN): #varlistlength
+                    try:
+                        ival = tkextractval(self.inputtype[i], 
+                                            self.var[i], 
+                                            self.tkentry[i])
+                        val.append(ival)
+                    except:
+                        if not self.varlenlist:
+                            if verbose: print("Insufficient items in "+
+                                              self.name)
+                            val = None
+                        else:
+                            continue
             elif (self.inputtype == moretypes.mergedboollist):
                 val = []
                 for var in self.mergedboollist:
@@ -492,8 +506,18 @@ class inputwidget:
         if (isinstance(self.inputtype, list)):
             listval=val
             if strinput: listval = re.split(r'[,; ]+', val)
-            # Input a list
+            if (not self.varlenlist) and (len(listval) != len(self.inputtype)):
+                print("Insufficient number of inputs in list for "+self.name)
+                return
+            if self.varlenlist:
+                self.listN = min(len(listval), len(self.inputtype))
+            # Clear the list
             for i in range(len(self.inputtype)):
+                itkentry= self.tkentry[i]
+                itkentry.delete(0, Tk.END)
+            # Input a list
+            #for i in range(len(self.inputtype)):  #varlistlength
+            for i in range(self.listN):  #varlistlength
                 itkentry= self.tkentry[i]
                 statedisabled= itkentry.cget('state') in ['disable','disabled']
                 if statedisabled and forcechange==False:
