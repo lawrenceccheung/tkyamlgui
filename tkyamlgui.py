@@ -835,7 +835,8 @@ class popupwindow(Tk.Toplevel, object):
         # link any widgets necessary
         for key,  inputvar in self.temp_inputvars.items():
             if self.temp_inputvars[key].ctrlelem is not None:
-                self.temp_inputvars[key].linkctrlelem(None, self.temp_inputvars)
+                self.temp_inputvars[key].linkctrlelem(self.popup_subframes, 
+                                                      self.temp_inputvars)
                 self.temp_inputvars[key].onoffctrlelem(None)
 
         # Append an entry number to name (if necessary)
