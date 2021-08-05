@@ -1094,6 +1094,33 @@ class listboxpopupwindows():
                     #print("dump key %s"%key+" "+repr(data.getval()))
             p.destroy()
         return output
+
+    def getNameFromOutputDef(self, outputtag, outputname):
+        inputdict = self.popupwindict['inputwidgets']
+        for x in inputdict:
+            if ('outputdef' in x) and (outputtag in  x['outputdef']):
+                if x['outputdef'][outputtag] == outputname:
+                    return x['name']
+        return None
+
+    def setentryval(self, entry, key, val, outputtag):
+        # Get the casedict
+        if entry not in self.alldataentries:
+            print(entry+' not in list')
+            return 
+        else:
+            casedict = self.alldataentries[entry]
+        # Get the keyname
+        entrykey = key
+        if entrykey not in casedict:
+            entrykey = self.getNameFromOutputDef(outputtag, key)
+        if entrykey is None:
+            print(key+' not found')
+            return
+        # Set the value
+        casedict[entrykey] = val
+        return
+
 # -- Done listofpopupwindows --
 
 class messagewindow():
