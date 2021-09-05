@@ -27,11 +27,13 @@ if sys.version_info[0] < 3:
     import ttk
     import tkFileDialog as filedialog
     import collections as collectionsabc
+    import ScrolledText as scrolledtext
 else:
     import tkinter as Tk
     from tkinter import ttk
     from tkinter import filedialog as filedialog
     import collections.abc as collectionsabc
+    import tkinter.scrolledtext as scrolledtext
 
 # Load NavigationToolbar2TkAgg
 try:
@@ -65,16 +67,18 @@ class moretypes(Enum):
     mergedboollist = 1    
     listbox        = 2
     filename       = 3
+    textbox        = 4
 
 # Map some strings to types
 typemap={}
-typemap['str']   = str
-typemap['bool']  = bool
-typemap['int']   = int
-typemap['float'] = float
+typemap['str']            = str
+typemap['bool']           = bool
+typemap['int']            = int
+typemap['float']          = float
 typemap['mergedboollist'] = moretypes.mergedboollist
 typemap['listbox']        = moretypes.listbox
 typemap['filename']       = moretypes.filename
+typemap['textbox']        = moretypes.textbox
 
 def to_bool(bool_str):
     """Parse the string and return the boolean value encoded or raise an
@@ -106,14 +110,15 @@ class ToggledFrame(Tk.Frame):
         self.header_frame.grid(row=0, column=0, sticky='w')
         defaultwidth=20
         w=max(len(text)+2, defaultwidth)
-        ttk.Label(self.header_frame, text=" "+text, width=w).grid(row=0, column=1,
-                                                              sticky='w')
+        ttk.Label(self.header_frame, text=" "+text, width=w).grid(row=0,
+                                                                  column=1,
+                                                                  sticky='w')
 
         self.toggle_button = ttk.Checkbutton(self.header_frame, width=5, 
                                              text='[show]', 
                                              command=self.toggle,
                                              variable=self.show, 
-                                             style='Demo.TButton') #'Toolbutton')
+                                             style='Demo.TButton') 
         self.toggle_button.grid(row=0, column=0)
 
         self.sub_frame = Tk.Frame(self.title_frame, #relief="sunken",
@@ -271,6 +276,8 @@ class Notebook(ttk.Notebook, object):
 def tkextractval(inputtype, tkvar, tkentry, optionlist=[]):
     if inputtype is bool:
         val = bool(tkvar.get())
+    elif (inputtype is moretypes.textbox):
+        val = str(tkentry.get("1.0", 'end-1c'))
     elif (inputtype is str) and len(optionlist)>0:
         val = str(tkvar.get())
     elif (inputtype is moretypes.listbox):
@@ -418,6 +425,11 @@ class inputwidget:
             self.tkentry   = Tk.OptionMenu(frame, self.var, *optlist)
             #self.tkentry.config(**self.entryopt)
             if defaultval is not None: self.var.set(defaultval)
+        elif (inputtype is moretypes.textbox):
+            self.var       = Tk.StringVar()
+            self.tkentry   = scrolledtext.ScrolledText(master=frame,
+                                                       **self.entryopt)
+            self.tkentry.insert('1.0', repr(defaultval).strip("'").strip('"'))
         elif (inputtype is str):
             self.var       = Tk.StringVar()
             self.tkentry   = Tk.Entry(master=frame, **self.entryopt) 

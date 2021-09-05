@@ -83,6 +83,18 @@ inputwidgets:
     defaultval: 1
     visible: True
 
+  - name: input_6
+    label: Textbox1
+    tab:   Tab 1
+    inputtype: textbox
+    defaultval: Default text
+    visible: True
+    entryopt:
+      width:    20
+      height:   10
+      bg:       'beige'
+      #font:    ["Times New Roman", 15]
+
   - name:       bool1
     label:      bool 1
     tab:        Tab 2
