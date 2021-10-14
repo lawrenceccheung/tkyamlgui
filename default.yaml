@@ -15,6 +15,9 @@ frames:
     tab:  Tab 4
     row:  0
     title: This is frame 2
+  - name: frame2a
+    frame: frame2
+    title: This is frame 2a
   - name: frame3
     tab:  Tab 4
     title: Where's frame 3

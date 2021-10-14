@@ -1303,7 +1303,13 @@ class App(Tk.Tk, object):
         if 'frames' in yamldict:
             for frame in yamldict['frames']:
                 name = frame['name']
-                tab  = self.notebook.tab(frame['tab'])
+                if 'tab' in frame:
+                    tab  = self.notebook.tab(frame['tab'])
+                elif 'frame' in frame:
+                    tab  = self.subframes[frame['frame']]
+                else:
+                    print('frame %s does not have tab or frame specification')
+                    sys.exit(1)
                 toggled = True if (('toggled' in frame) and frame['toggled']) else False
                 if toggled:
                     title = '' if ('title' not in frame) else frame['title']
