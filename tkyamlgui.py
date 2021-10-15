@@ -60,6 +60,9 @@ except:
 # Helpful function for pulling things out of dicts
 getdictval = lambda d, key, default: default if key not in d else d[key]
 
+# Function to evaluate the string escapes
+escapestr  = lambda s: s.decode('string_escape') if sys.version_info[0] < 3 else bytes(s, "utf-8").decode("unicode_escape")
+
 verbose = False
 
 # Add some additional input types
@@ -429,7 +432,8 @@ class inputwidget:
             self.var       = Tk.StringVar()
             self.tkentry   = scrolledtext.ScrolledText(master=frame,
                                                        **self.entryopt)
-            self.tkentry.insert('1.0', repr(defaultval).strip("'").strip('"'))
+            formattedval = escapestr(defaultval)
+            self.tkentry.insert('1.0', formattedval.strip("'").strip('"'))
         elif (inputtype is str):
             self.var       = Tk.StringVar()
             self.tkentry   = Tk.Entry(master=frame, **self.entryopt) 
@@ -563,6 +567,9 @@ class inputwidget:
                 if self.ctrlelem is not None: self.onoffctrlelem(None)
             elif (self.inputtype is str) and len(self.optionlist)>0:
                 self.var.set(val.strip("'").strip('"'))
+            elif (self.inputtype is moretypes.textbox):
+                self.tkentry.delete('1.0', 'end')
+                self.tkentry.insert('1.0', escapestr(val).strip("'").strip('"'))
             elif self.inputtype==moretypes.listbox:
                 listval = val
                 if strinput: listval = re.split(r'[,; ]+', val)
