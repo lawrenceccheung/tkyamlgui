@@ -805,6 +805,7 @@ class popupwindow(Tk.Toplevel, object):
             for frame in defdict['frames']:
                 toggled = True if (('toggled' in frame) and frame['toggled']) else False
                 name = frame['name']
+                kwargs = {} if 'kwargs' not in frame else frame['kwargs']
                 if toggled:
                     title = '' if ('title' not in frame) else frame['title']
                     state = 0 if ('initstate' not in frame) else frame['initstate']
@@ -816,7 +817,7 @@ class popupwindow(Tk.Toplevel, object):
                     self.popup_subframes[name] = self.popup_toggledframes[name].sub_frame
                     subframelayout = self.popup_toggledframes[name].title_frame
                 else:
-                    self.popup_subframes[name] = Tk.LabelFrame(self.drawframe)
+                    self.popup_subframes[name] = Tk.LabelFrame(self.drawframe, **kwargs)
                     subframelayout = self.popup_subframes[name]
                 # Put frame on grid
                 kwargs = {}
@@ -1311,6 +1312,7 @@ class App(Tk.Tk, object):
                     print('frame %s does not have tab or frame specification')
                     sys.exit(1)
                 toggled = True if (('toggled' in frame) and frame['toggled']) else False
+                kwargs = {} if 'kwargs' not in frame else frame['kwargs']
                 if toggled:
                     title = '' if ('title' not in frame) else frame['title']
                     state = 0 if ('initstate' not in frame) else frame['initstate']
@@ -1321,7 +1323,7 @@ class App(Tk.Tk, object):
                     self.subframes[name] = self.toggledframes[name].sub_frame
                     subframelayout = self.toggledframes[name].title_frame
                 else:
-                    self.subframes[name] = Tk.LabelFrame(tab)
+                    self.subframes[name] = Tk.LabelFrame(tab, **kwargs)
                     subframelayout = self.subframes[name]
                 if 'row' in frame:
                     subframelayout.grid(column=0, row=frame['row'],

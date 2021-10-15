@@ -18,6 +18,10 @@ frames:
   - name: frame2a
     frame: frame2
     title: This is frame 2a
+    kwargs:
+      borderwidth: 0
+      padx: 0
+      pady: 0
   - name: frame3
     tab:  Tab 4
     title: Where's frame 3
