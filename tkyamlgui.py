@@ -1286,6 +1286,12 @@ class App(Tk.Tk, object):
             else:         Loader=yaml.safe_load
             yamldict = Loader(fp)
 
+        # Load any includes
+        if ('includes' in yamldict) and isinstance(yamldict['includes'],list):
+            for fname in yamldict['includes']:
+                updatedict = Loader(open(fname))
+                yamldict = update(yamldict, updatedict)
+
         # Load any additional local yaml configuration 
         if os.path.exists(localconfigdir):
             for fname in os.listdir(localconfigdir):

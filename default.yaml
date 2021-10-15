@@ -269,3 +269,8 @@ setfromdict:
   incflo.int1:  123
   incflo.list1: [-1, 3.1, stuffB]
   incflo.mergedboollist1: ['on1', 'off2', 'off3']
+
+# Add in any additional yaml files with includes section.
+# ------------
+#includes:
+#  - include1.yaml
