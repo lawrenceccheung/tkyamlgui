@@ -358,6 +358,7 @@ class inputwidget:
         self.labelonly = labelonly
         self.inputtype = inputtype
         self.var       = None
+        self.defaultval= defaultval
         self.optionlist= optionlist
         self.listboxopt= listboxopt
         self.ctrlframe = ctrlframe
@@ -605,6 +606,11 @@ class inputwidget:
                 self.tkentry.insert(0, repr(val).strip("'").strip('"'))
             if statedisabled and forcechange: # Reset the state
                 self.tkentry.config(state='disabled')                    
+        return
+
+    def setdefault(self):
+        if self.defaultval is not None:
+            self.setval(self.defaultval, forcechange=True)
         return
 
     def isactive(self):
@@ -1234,7 +1240,7 @@ class App(Tk.Tk, object):
     Creates a Tk app which loads the configuration from a yaml file
     """
     def __init__(self, menufunc=None, configyaml='default.yaml', 
-                 localconfigdir='',
+                 localconfigdir='', scriptpath='',
                  title='TK Yaml GUI', leftframew=525, withdraw=False,
                  *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
@@ -1289,7 +1295,7 @@ class App(Tk.Tk, object):
         # Load any includes
         if ('includes' in yamldict) and isinstance(yamldict['includes'],list):
             for fname in yamldict['includes']:
-                updatedict = Loader(open(fname))
+                updatedict = Loader(open(os.path.join(scriptpath,fname)))
                 yamldict = update(yamldict, updatedict)
 
         # Load any additional local yaml configuration 
