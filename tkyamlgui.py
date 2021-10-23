@@ -47,6 +47,8 @@ try:
     import ruamel.yaml as yaml
     #print("# Loaded ruamel.yaml")
     useruemel=True
+    import warnings
+    warnings.simplefilter('ignore', ruamel.yaml.error.UnsafeLoaderWarning)
     try:
         yaml = yaml.YAML()
     except:
@@ -523,6 +525,7 @@ class inputwidget:
         if (isinstance(self.inputtype, list)):
             listval=val
             if strinput: listval = re.split(r'[,; ]+', val)
+            if listval is None: return
             if (not self.varlenlist) and (len(listval) != len(self.inputtype)):
                 print("Insufficient number of inputs in list for "+self.name)
                 return
@@ -1006,6 +1009,11 @@ class listboxpopupwindows():
                 continue
             defaultdict[item['name']] = item['defaultval']
         return defaultdict
+
+    def deleteall(self):
+        self.tkentry.delete(0, Tk.END)
+        self.alldataentries.clear()
+        return
 
     def populatefromdict(self, fromdict, deleteprevious=True, 
                          verbose=False, forcechange=False):
@@ -1561,7 +1569,7 @@ class App(Tk.Tk, object):
         for key, var in self.inputvars.items():
             if (not var.isactive()) and onlyactive: 
                 continue
-            if helptag in var.outputdef:
+            if (helptag in var.outputdef) and (outputtag in var.outputdef):
                 outputkey = var.outputdef[outputtag]
                 output[outputkey] = var.outputdef[helptag]
         return output
