@@ -1158,9 +1158,10 @@ class listboxpopupwindows():
 # -- Done listofpopupwindows --
 
 class messagewindow():
-    def __init__(self, toproot, mesg, autowidth=True, height=5, 
+    def __init__(self, toproot, mesg, autowidth=True, height=5, maxwidth=150,
                  title='', activetext=False):
         width=len(max(mesg.split("\n"), key = len)) if autowidth else 40
+        width=maxwidth if width>maxwidth else width
         self.mesgwin     = Tk.Toplevel(toproot)
         if len(title)>0: self.mesgwin.wm_title(title)
         self.text_widget = Tk.Text(self.mesgwin, height=height, width=width)
