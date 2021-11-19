@@ -651,6 +651,21 @@ class inputwidget:
         self.tkentry.insert(0, filename)
         return filename
 
+    def refresh_listbox(self, refreshlist):
+        """
+        Repopulate the listbox options from refreshlist
+        """
+        if self.inputtype != moretypes.listbox:
+            print("refresh_listbox ERROR: %s is not listbox"%self.name)
+            return
+        
+        # Delete and repopulate it
+        self.tkentry.delete(0, Tk.END)
+        for i, option in enumerate(refreshlist):
+                self.tkentry.insert(i+1, option)
+        return
+
+
     # DELETE THIS!  OBSOLETE!
     def onoffframe(self):
         if self.var.get() == 1:
@@ -820,12 +835,13 @@ class popupwindow(Tk.Toplevel, object):
         if 'frames' in defdict:
             for frame in defdict['frames']:
                 toggled = True if (('toggled' in frame) and frame['toggled']) else False
-                name = frame['name']
-                kwargs = {} if 'kwargs' not in frame else frame['kwargs']
+                name    = frame['name']
+                drawframe = self.popup_subframes[frame['frame']] if 'frame' in frame else self.drawframe
+                kwargs  = {} if 'kwargs' not in frame else frame['kwargs']
                 if toggled:
                     title = '' if ('title' not in frame) else frame['title']
                     state = 0 if ('initstate' not in frame) else frame['initstate']
-                    self.popup_toggledframes[name] = ToggledFrame(self.drawframe,
+                    self.popup_toggledframes[name] = ToggledFrame(drawframe,
                                                             text=title, 
                                                             relief="raised", 
                                                             initstate=state,
@@ -833,7 +849,7 @@ class popupwindow(Tk.Toplevel, object):
                     self.popup_subframes[name] = self.popup_toggledframes[name].sub_frame
                     subframelayout = self.popup_toggledframes[name].title_frame
                 else:
-                    self.popup_subframes[name] = Tk.LabelFrame(self.drawframe, **kwargs)
+                    self.popup_subframes[name] = Tk.LabelFrame(drawframe, **kwargs)
                     subframelayout = self.popup_subframes[name]
                 # Put frame on grid
                 kwargs = {}
@@ -857,7 +873,7 @@ class popupwindow(Tk.Toplevel, object):
                 widgetcopy['defaultval'] = self.stored_inputvars[name]
             widgetframe = getdictval(widget, 'frame', None)
             targetframe = self.drawframe if widgetframe is None else self.popup_subframes[widgetframe]
-            iwidget = inputwidget.fromdict(targetframe, #self.drawframe, 
+            iwidget = inputwidget.fromdict(targetframe, 
                                            widgetcopy, parent=parent,
                                            allinputs=self.temp_inputvars)
             self.temp_inputvars[name] = iwidget
@@ -936,7 +952,12 @@ class popupwindow(Tk.Toplevel, object):
 
     def savethenexec(self, cmdstr):
         self.savevals()
-        eval(cmdstr)
+        exec(cmdstr)
+        return
+
+    def updatelistbox(self, listbox, listboxpopuptarget):
+        newlist = self.parent.refresh_popupwindow_listbox(listboxpopuptarget)
+        self.temp_inputvars[listbox].refresh_listbox(newlist)
         return
 
 # -- Done popupwindow --
@@ -1462,6 +1483,9 @@ class App(Tk.Tk, object):
             col_count, row_count = tab.grid_size()
             for n in range(row_count): 
                 tab.grid_rowconfigure(n, minsize=minsize)
+
+    def refresh_popupwindow_listbox(self, listboxpopuptarget):
+        return self.listboxpopupwindict[listboxpopuptarget].getitemlist()
 
     def mirrorinputs(self, source, target):
         # Get the input 
