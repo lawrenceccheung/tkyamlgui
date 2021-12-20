@@ -1039,8 +1039,17 @@ class listboxpopupwindows():
     def populatefromdict(self, fromdict, deleteprevious=True, 
                          verbose=False, forcechange=False):
         if deleteprevious: 
+            # Check initial state
+            prevstate = self.tkentry.cget('state')
+            statedisabled=self.tkentry.cget('state') in ['disable','disabled']
+            if statedisabled and forcechange: 
+                self.tkentry.config(state='normal') 
+            # Delete entries
             self.tkentry.delete(0, Tk.END)
             self.alldataentries.clear()
+            # Reset state if necessary
+            if statedisabled and forcechange: 
+                self.tkentry.config(state=prevstate) 
         for itemkey, itemdict in fromdict.items():
             #print(itemkey)
             # First initialize a default data set
