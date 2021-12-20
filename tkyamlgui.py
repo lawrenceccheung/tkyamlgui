@@ -1058,7 +1058,9 @@ class listboxpopupwindows():
             popupwindow(self.parent, self.frame, self.popupwindict, storeddata,
                         savebutton=False, quitafterinit=True, popupgui=False)
             # Then customize entry with stuff from item
-            for key, item in itemdict.items():
+            itemdict2 = dict(itemdict) if not isinstance(itemdict, dict) else itemdict
+                
+            for key, item in itemdict2.items():
                 if verbose: print('%s: %s'%(key, repr(item)))
                 storeddata[key] = item
             #if verbose: print(storeddata)
