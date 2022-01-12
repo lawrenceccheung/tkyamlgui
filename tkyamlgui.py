@@ -1612,8 +1612,8 @@ class App(Tk.Tk, object):
         
 
     def launchpopupwin(self, key, **kwargs):
-        popupwindow(self, self,  self.yamldict['popupwindow'][key], 
-                    self.popup_storteddata[key], **kwargs)
+        return popupwindow(self, self,  self.yamldict['popupwindow'][key], 
+                           self.popup_storteddata[key], **kwargs)
         
 if __name__ == "__main__":
     App().mainloop()
