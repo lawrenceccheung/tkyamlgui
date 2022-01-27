@@ -1092,11 +1092,11 @@ class listboxpopupwindows():
         """Create a new input window entry"""
         storeddata = OrderedDict()
         #popupwindow(self.frame, self.frame, self.popupwindict, storeddata,
-        popupwindow(self.parent, self.frame, self.popupwindict, storeddata,
-                    savebutton=False, closebtxt=self.closebuttontxt, 
-                    entrynum=len(self.alldataentries),
-                    extraclosefunc=partial(self.insertdata, storeddata))
-        return
+        p=popupwindow(self.parent, self.frame, self.popupwindict, storeddata,
+                      savebutton=False, closebtxt=self.closebuttontxt, 
+                      entrynum=len(self.alldataentries),
+                      extraclosefunc=partial(self.insertdata, storeddata))
+        return p
 
     def edit(self):
         """Edit an entry in the list box"""
@@ -1112,7 +1112,7 @@ class listboxpopupwindows():
                       closebtxt=self.closebuttontxt,
                       extraclosefunc=self.checknamechange)
         #for key, data in p.temp_inputvars.items(): print("edit key %s"%key)
-        return
+        return p
 
     def remove(self):
         selected   = tkextractval(moretypes.listbox, None, self.tkentry)
