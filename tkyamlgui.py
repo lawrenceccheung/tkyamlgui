@@ -1283,12 +1283,13 @@ class App(Tk.Tk, object):
     def __init__(self, menufunc=None, configyaml='default.yaml', 
                  localconfigdir='', scriptpath='',
                  title='TK Yaml GUI', leftframew=525, withdraw=False,
+                 dorightframe=True, geometry="1050x625", leftframeh=580,
                  *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
         if withdraw: self.withdraw()
         self.leftframew = leftframew
         self.wm_title(title)
-        self.geometry("1050x625")
+        self.geometry(geometry)
         # Set up the menu bar
         if menufunc is not None:   menufunc(self)
         else:                      self.menubar(self)
@@ -1303,7 +1304,8 @@ class App(Tk.Tk, object):
         # Get the drawing window
         self.center = Tk.Frame(self.masterframe, width=leftframew, height=500)
         #self.center.grid(row=0, column=1, sticky='nsew')
-        self.center.pack(side=Tk.RIGHT, fill=Tk.BOTH, expand=True)
+        if dorightframe:
+            self.center.pack(side=Tk.RIGHT, fill=Tk.BOTH, expand=True)
         self.dpi=100
         self.fig = Figure(figsize=(leftframew/self.dpi, 500/self.dpi),
                           dpi=self.dpi, facecolor='white')
@@ -1314,18 +1316,14 @@ class App(Tk.Tk, object):
         # Add toolbar to figcanvas
         self.toolbar = NavigationToolbar2TkAgg(self.figcanvas, self.center)
         self.toolbar.update()
-        self.toolbar.grid(row=1, column=0, sticky='nsew')
-        #toolbar.pack(side=Tk.BOTTOM, fill=Tk.X, expand=1)
-        #self.figcanvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1
-        self.figcanvas.get_tk_widget().grid(row=0, column=0, sticky='nsew')
+        if dorightframe:
+            self.toolbar.grid(row=1, column=0, sticky='nsew')
+            self.figcanvas.get_tk_widget().grid(row=0, column=0, sticky='nsew')
 
         # The input frame is leftframe
-        self.leftframeh = 580 # 530
+        self.leftframeh = leftframeh # 530
         self.leftframe=Tk.Frame(self.masterframe, width=leftframew) #530
         self.leftframe.pack(side=Tk.LEFT, fill=Tk.BOTH, expand=True)
-        #self.leftframe=Tk.Frame(self.masterframe, width=leftframew, height=530) #530
-        #self.leftframe.grid(row=0, column=0, sticky='nsew')
-        #self.leftframe.grid_propagate(0)
 
         # Load the yaml input file
         with open(configyaml) as fp:
