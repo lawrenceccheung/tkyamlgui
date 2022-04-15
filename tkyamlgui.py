@@ -854,12 +854,13 @@ class popupwindow(Tk.Toplevel, object):
                 # Put frame on grid
                 kwargs = {}
                 if 'row' in frame: kwargs['row'] = frame['row']
-                subframelayout.grid(column=0, padx=10,pady=10, 
+                col = 0 if 'col' not in frame else frame['col']
+                subframelayout.grid(column=col, padx=10,pady=10, 
                                     columnspan=4, sticky='w',
                                     **kwargs)
                 if ('title' in frame) and (not toggled):
                     Tk.Label(self.popup_subframes[name], 
-                             text=frame['title']).grid(row=0, column=0, 
+                             text=frame['title']).grid(row=0, column=col, 
                                                        columnspan=4,
                                                        sticky='w')
         
@@ -1383,12 +1384,13 @@ class App(Tk.Tk, object):
                 else:
                     self.subframes[name] = Tk.LabelFrame(tab, **kwargs)
                     subframelayout = self.subframes[name]
+                col = 0 if 'col' not in frame else frame['col']
                 if 'row' in frame:
-                    subframelayout.grid(column=0, row=frame['row'],
+                    subframelayout.grid(column=col, row=frame['row'],
                                         padx=10,pady=10, 
                                         columnspan=4, sticky='w')
                 else:
-                    subframelayout.grid(column=0, padx=10,pady=10,
+                    subframelayout.grid(column=col, padx=10,pady=10,
                                             columnspan=4, sticky='w') 
                 if ('title' in frame) and (not toggled):
                     Tk.Label(subframelayout, 
