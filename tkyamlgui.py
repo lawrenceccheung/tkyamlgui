@@ -704,6 +704,30 @@ class inputwidget:
                     else:
                         try: elem['ctrlinput'].tkentry.config(state=inputstate)
                         except: None
+        # Handle the str type
+        if self.inputtype == str:
+            for ielem, elem in enumerate(self.ctrlelem):
+                criteria  = elem['activewhen']
+                optiontest= criteria[0]
+                condition = criteria[1]
+                if currstate==condition:
+                    framestate, inputstate = 'normal', 'normal'
+                else:
+                    framestate, inputstate = 'disable', 'disabled'
+                if elem['ctrlframe'] is not None:
+                    #print("Set "+elem['frame']+" to "+framestate)
+                    for child in elem['ctrlframe'].winfo_children():
+                        try:    child.configure(state=framestate)
+                        except: None
+                if elem['ctrlinput'] is not None:
+                    #print("Set "+elem['input']+" to "+inputstate)
+                    if isinstance(elem['ctrlinput'].tkentry, list):
+                        for entry in elem['ctrlinput'].tkentry:
+                            try:    entry.config(state=inputstate)
+                            except: None
+                    else:
+                        try: elem['ctrlinput'].tkentry.config(state=inputstate)
+                        except: None
         # Handle the listbox option 
         if self.inputtype == moretypes.listbox:
             # Get the current state
