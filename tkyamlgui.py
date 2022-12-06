@@ -405,7 +405,7 @@ class inputwidget:
             if 'height' not in listboxopt: listboxopt['height'] = height
             self.yscroll   = Tk.Scrollbar(frame, orient=Tk.VERTICAL)
             if visible and (row is None): row=self.tklabel.grid_info()['row']
-            self.yscroll.grid(row=row, column=2, sticky=Tk.NW+Tk.S)
+            if visible: self.yscroll.grid(row=row, column=2, sticky=Tk.NW+Tk.S)
             self.tkentry   = Tk.Listbox(frame, #height=height,
                                         exportselection=False,
                                         yscrollcommand=self.yscroll.set, 
@@ -898,6 +898,9 @@ class popupwindow(Tk.Toplevel, object):
                 widgetcopy['defaultval'] = self.stored_inputvars[name]
             widgetframe = getdictval(widget, 'frame', None)
             targetframe = self.drawframe if widgetframe is None else self.popup_subframes[widgetframe]
+            if 'optionlist' in widgetcopy:
+                if isinstance(widgetcopy['optionlist'], str):
+                    widgetcopy['optionlist'] = eval(widgetcopy['optionlist'])
             iwidget = inputwidget.fromdict(targetframe, 
                                            widgetcopy, parent=parent,
                                            allinputs=self.temp_inputvars)
@@ -1152,35 +1155,60 @@ class listboxpopupwindows():
     def getitemlist(self):
         return [key for key, item in self.alldataentries.items()]
 
-    def dumpdict(self, tag, subset=[], onlyactive=True, keyfunc=None):
+    def dumpdict(self, tag, subset=[], onlyactive=True, keyfunc=None,
+                 dynamicprefix_keyfunc=None):
         sep = '.'
         output = OrderedDict()
-        # Get a list of all entries
-        #itemlist = [key for key, item in self.alldataentries.items()]
         itemlist = self.getitemlist()
         if len(itemlist)<1: return output
-        if 'outputprefix' in self.listboxdict:
-            outputpre  = getdictval(self.listboxdict['outputprefix'], tag, '')
-        if 'outputlist' in self.listboxdict:
-            outputlist = getdictval(self.listboxdict['outputlist'], tag, '')
-            key = outputpre + sep + outputlist
-            output[key] = ' '.join([str(elem) for elem in itemlist])
+
+        # Get a list of all entries
+        if 'dynamicprefixkey' in self.listboxdict:
+            dynamicprefixkey = self.listboxdict['dynamicprefixkey']
+            labellist = OrderedDict()
+            # Construct a list
+            for name, storeddata in self.alldataentries.items():
+                p=popupwindow(self.parent, self.frame, self.popupwindict,
+                              storeddata, hidden=True)
+                prefix = p.temp_inputvars[dynamicprefixkey].getval()[0]
+                if prefix in labellist:
+                    labellist[prefix].append(name)
+                else:
+                    labellist[prefix] = [name]
+            # Transfer lablellist to output dict
+            for k,g in labellist.items():
+                outputlist = getdictval(self.listboxdict['outputlist'], tag, '')
+                key = k+sep+outputlist
+                output[key] = ' '.join([str(elem) for elem in g])
+        else:
+            if 'outputprefix' in self.listboxdict:
+                outputpre  = getdictval(self.listboxdict['outputprefix'], tag, '')
+            if 'outputlist' in self.listboxdict:
+                outputlist = getdictval(self.listboxdict['outputlist'], tag, '')
+                key = outputpre + sep + outputlist
+                output[key] = ' '.join([str(elem) for elem in itemlist])
+
+        # Find the subset of items to output
         if len(subset)>0: 
             loopsubset = {key:self.alldataentries[key] for key in subset}
         else: 
             loopsubset = self.alldataentries
         #for key, storeddata in self.alldataentries.items(): 
         for key, storeddata in loopsubset.items(): 
-            #p=popupwindow(self.frame, self.frame, self.popupwindict,storeddata,
-            p=popupwindow(self.parent, self.frame, self.popupwindict,storeddata,
-                          hidden=True)
+            p=popupwindow(self.parent, self.frame, self.popupwindict,
+                          storeddata, hidden=True)
             for k, data in p.temp_inputvars.items(): 
                 if data.isactive() and onlyactive:
                     if tag in data.outputdef:
-                        if keyfunc is None:
-                            storekey = key+'.'+data.outputdef[tag]
-                        else:
+                        if dynamicprefix_keyfunc is not None:
+                            storekey = dynamicprefix_keyfunc(key,
+                                                             p.temp_inputvars,
+                                                             data)
+                        elif keyfunc is not None:
                             storekey = keyfunc(key, self.listboxdict, data)
+                        else:
+
+                            storekey = key+'.'+data.outputdef[tag]
                         output[storekey] = data.getval()
                     #print("dump key %s"%key+" "+repr(data.getval()))
             p.destroy()
