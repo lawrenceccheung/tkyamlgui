@@ -511,6 +511,9 @@ class inputwidget:
                         val.append(iftrue)
                     else:                            
                         val.append(iffalse)
+                # Remove all empty values from list
+                val = [x for x in val if x != '']
+                if len(val)<1: val = None
             else:
                 # Scalar primitive types
                 val = tkextractval(self.inputtype, self.var, self.tkentry,
