@@ -1171,9 +1171,12 @@ class listboxpopupwindows():
             labellist = OrderedDict()
             # Construct a list
             for name, storeddata in self.alldataentries.items():
-                p=popupwindow(self.parent, self.frame, self.popupwindict,
-                              storeddata, hidden=True)
-                prefix = p.temp_inputvars[dynamicprefixkey].getval()[0]
+                #p=popupwindow(self.parent, self.frame, self.popupwindict,
+                #              storeddata, hidden=True)
+                #prefix = p.temp_inputvars[dynamicprefixkey].getval()[0]
+                #print(storeddata[dynamicprefixkey], prefix)
+                prefix = storeddata[dynamicprefixkey]
+                prefix = prefix[0] if isinstance(prefix, list) else prefix
                 if prefix in labellist:
                     labellist[prefix].append(name)
                 else:
@@ -1196,8 +1199,8 @@ class listboxpopupwindows():
             loopsubset = {key:self.alldataentries[key] for key in subset}
         else: 
             loopsubset = self.alldataentries
-        #for key, storeddata in self.alldataentries.items(): 
-        for key, storeddata in loopsubset.items(): 
+        #for key, storeddata in self.alldataentries.items():
+        for key, storeddata in loopsubset.items():
             p=popupwindow(self.parent, self.frame, self.popupwindict,
                           storeddata, hidden=True)
             for k, data in p.temp_inputvars.items(): 
