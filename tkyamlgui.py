@@ -1145,8 +1145,13 @@ class listboxpopupwindows():
         #for key, data in p.temp_inputvars.items(): print("edit key %s"%key)
         return p
 
-    def remove(self):
-        selected   = tkextractval(moretypes.listbox, None, self.tkentry)
+    def remove(self, selectednames=None):
+        if selectednames is None:
+            selected   = tkextractval(moretypes.listbox, None, self.tkentry)
+        else:
+            selected   = selectednames
+            #allnames   = self.getitemlist()
+            #selected   = [allnames.index(x) for x in allnames]
         if len(selected)<1: 
             print("No items to delete")
             return
