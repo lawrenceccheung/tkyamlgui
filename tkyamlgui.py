@@ -2,7 +2,11 @@
 
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
+
+try:
+    matplotlib.use('TkAgg')
+except:
+    pass
 
 # For help see:
 # https://matplotlib.org/stable/gallery/user_interfaces/embedding_in_tk_sgskip.html
